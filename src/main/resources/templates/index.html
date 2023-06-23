@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="ISO-8859-1">
+<title>Fuzzy String Matching</title>
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+	integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+	crossorigin="anonymous">
+<script src="https://kit.fontawesome.com/1385283e69.js"
+	crossorigin="anonymous"></script>
+</head>
+<body>
+	<div class="container">
+		<div>
+			<h1>Fuzzy string Matching</h1>
+		</div>
+		<nav class="nav nav-pills nav-fill">
+			<a class="nav-link" href="#">Upload a CSV file</a> <a
+				th:href="@{/view-matches}" class="btn btn-primary btn-sm mb-3"
+				th:if="${status}">View Matches</a>
+		</nav>
+		<!--display error if any-->
+
+		
+		<div class="alert alert-success" role="alert" th:if="${status}">
+			<strong>Success:</strong> <span th:text="${message}"></span>
+		</div>
+		<!-- <div th:unless="${status}" class="alert alert-danger" role="alert">
+			<strong>Error:</strong> <span th:text="${message}"></span>
+		</div>  -->
+		<form th:action="@{/upload-csv-file}" method="POST"
+			enctype="multipart/form-data">
+			<div>
+				<label for="img">Select a CSV file:</label> <input type="file"
+					name="file" class="form-control-file" id="file" accept=".csv">
+			</div>
+			<hr>
+
+			<button type="submit" class="btn btn-info col-2">Upload Records</button>
+		</form>
+
+	</div>
+
+</body>
+</html>
