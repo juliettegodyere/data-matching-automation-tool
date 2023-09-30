@@ -1,0 +1,98 @@
+/* Define a class for the accept icon */
+/* Apply styles to the body element to set default font and margin */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+/* Style the header to span the full width */
+nav {
+    background-color: #333;
+    /* color: white; */
+    padding: 10px;
+    width: 100%;
+}
+
+/* Style the main content to be centered with 80% width */
+main {
+    margin: 0 auto; /* Center the content */
+    /* width: 80%; */
+    padding: 20px;
+}
+
+/* Style the footer to span the full width */
+footer {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    width: 100%;
+}
+.sub-header{
+    /* background-color: blue; */
+    margin-bottom: 2em;
+}
+.content{
+    /* background-color: crimson; */
+}
+.pagination{
+    margin-top: 2em;
+    /* margin-bottom: 2em; */
+}
+.accept-icon .fas {
+    
+}
+
+/* Define a class for the reject icon */
+.reject-icon .fas {
+   
+}
+.action-icon-accept{
+    color: green;   /* Set the icon color */
+    font-size: xx-large;
+    border-radius: 30px;
+    align-content: center;
+}
+.action-icon-reject{
+    color: red;     /* Set the icon color */
+    font-size: xx-large;
+    border-radius: 30px;
+    align-content: center;
+}
+.action-icon-accept:hover{
+    color: green;   /* Set the icon color */
+    font-size: xx-large;
+    background-color: white;
+}
+.action-icon-reject:hover{
+    color: red;     /* Set the icon color */
+    font-size: xx-large;
+    background-color: white;
+    border-radius: 30px;
+}
+/* Hide the icons by default */
+.accept-icon .fas,
+.reject-icon .fas {
+    display: none;
+}
+.icons .fas{
+    font-size: xx-large;
+}
+
+/* Show the icons when hovering over the table row */
+tr.accept-icon:hover .accept-icon .fas,
+tr.reject-icon:hover .reject-icon .fas {
+    display: inline-block;
+}
+tr:hover{
+    background-color:aliceblue;
+}
+.dot-icon{
+    color: blue;
+    font-size: xx-large;
+}
+footer {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    width: 100%;
+}

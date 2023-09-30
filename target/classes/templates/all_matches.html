@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<meta charset="ISO-8859-1">
+<title>Fuzzy String Matching</title>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+
+<body>
+	<div class="container py-5">
+		<div class="row">
+			<div class="col-10 mx-auto">
+				<div class="row">
+					<h1 class="col-9">File Upload Status</h1>
+					<button type="submit" class="btn btn-info col-2">Download Matches</button>
+				</div>
+				<!--display error if any-->
+				<!-- <div class="alert alert-danger" role="alert" th:if="${status}">
+					<strong>Error:</strong> <span th:text="${message}"></span>
+				</div>  -->
+
+				<!--display users list-->
+				<table class="table table-striped" >
+					<thead>
+						<tr>
+							<!--                     <th scope="col">#</th>
+ -->
+							<th scope="col">Client Procedure Name</th>
+							<th scope="col">CBA Procedure Match Name</th>
+							<th scope="col">CBA Procedure Match Code</th>
+							<th scope="col">Match Degree</th>
+							<th scope="col">Quantity</th>
+							<th scope="col">Rate</th>
+							<th scope="col">Status</th>
+<!-- 							<th scope="col">Find Matches</th>
+ -->						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="drug, i : ${drugs}">
+							<!--                     <th scope="row" th:text="${i.index + 1}"></th>
+ -->
+							<td th:text="${drug.drugName}"></td>
+							<td th:text="${drug.matchName}"></td>
+							<td th:text="${drug.matchCode}"></td>
+							<td th:text="${drug.editDistance}"></td>
+							<td th:text="${drug.quantity}"></td>
+							<td th:text="${drug.rate}"></td>
+							<td><a th:href="@{/authorise/{id}(id=${drug.id})}"
+								th:if="${drug.flag}" class="btn btn-success">Authorised</a> <a
+								th:href="@{/authorise/{id}(id=${drug.id})}"
+								th:unless="${drug.flag}" class="btn btn-danger">Unauthorised</a>
+							</td>
+							<td>
+								<!-- <a class="btn btn-info" data-toggle="modal" data-target="#exampleModal">Matches</a> -->
+								<!--  								https://www.youtube.com/watch?v=svG_bpr_1Yk  --> <!-- Button trigger modal -->
+
+								<!-- <a th:href="@{/matches/{id}(id=${drug.id})}"
+								class="btn btn-info" data-toggle="modal"
+								th:attr="data-target='#exampleModal'+${drug.id }">Matches</a>
+								<div class="modal modal-warning fade in"
+									th:id="exampleModal+${drug.id }">
+									<div class="modal-dialog">
+										<div class="modal-content">
+											<div class="modal-header">
+												<h5 class="modal-title" id="exampleModalLabel"
+													th:text="${drug.drugName}">Modal title</h5>
+												<button type="button" class="btn-close"
+													data-bs-dismiss="modal" aria-label="Close"></button>
+											</div>
+											<div class="modal-body">
+												<table class="table">
+													<thead>
+														<tr>
+															<th scope="col">Name</th>
+															<th scope="col">Code</th>
+														</tr>
+													</thead>
+													<tbody>
+														<tr th:each="match, i : ${matches}">
+															<td><a th:href="@{/update/{id}(id=${drug.id})}"
+																th:text="${}"></a></td>
+															<td><a th:href="@{/update/{id}(id=${drug.id})}"
+																th:text="${match.procedureCode}" data-bs-dismiss="modal"></a></td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+										</div>
+									</div>
+								</div> -->
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+	<script
+		src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>

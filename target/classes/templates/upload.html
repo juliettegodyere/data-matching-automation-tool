@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="ISO-8859-1">
+<title>Fuzzy String Matching</title>
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+	integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+	crossorigin="anonymous">
+	<link rel="stylesheet" th:href="@{/css/loading.css}">
+<script src="https://kit.fontawesome.com/1385283e69.js"
+	crossorigin="anonymous"></script>
+</head>
+<body>
+	<div class="container">
+		<div>
+			<h1>Fuzzy string Matching</h1>
+		</div>
+		
+		
+		<form th:action="@{/upload-csv-file}" method="POST"
+			enctype="multipart/form-data">
+    		<input type="radio" name="operationType" value="create" checked> Upload New Schedule
+			<input type="radio" name="operationType" value="update" > Update Lookup Table
+
+			<hr>
+			<div>
+				<label for="img">Select a CSV file:</label> <input type="file"
+					name="file" class="form-control-file" id="file" accept=".csv">
+			</div>
+			<hr>
+
+			<button id="showLoadingButton" type="submit" class="btn btn-info col-2">Upload Records</button>
+		</form>
+		<!-- <div th:text="${uploadData}"></div> -->
+		<div id="loading-overlay">
+			<div class="spinner">
+				<h1>I am loading</h1>
+			</div>
+		</div>
+	</div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	<script src="/js/loading.js"></script>
+</body>
+</html>

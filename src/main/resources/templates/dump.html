@@ -1,0 +1,688 @@
+<div class="container-fluid">
+    <div class="header container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand">Logo</a>
+                <form th:action="@{/page/{pageNo}(pageNo=1)}" method="get" class="d-flex" role="search">
+                    <input class="form-control me-2" type="text" name="query" placeholder="Search..."
+                        th:value="${query}" aria-label="Search">
+                    <input type="hidden" name="sortField" th:value="${sortField}">
+                    <input type="hidden" name="sortDir" th:value="${sortDir}">
+                    <input type="hidden" name="statuses" th:value="${statuses}">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+            </div>
+        </nav>
+    </div>
+    <div class="main container">
+        <h2><span th:if="${errorMessage}" th:text="${errorMessage}">Error</span></h2>
+        <!-- <h1 th:unless="${errorMessage}">List of Matched Procedures</h1> -->
+        <div class="row">
+            <div class="col-8 ">
+                <!-- <a th:href="@{/upload-schedule}" class="btn btn-primary btn mb-3"> Upload Schedule </a> -->
+            </div>
+            <div class="col-4 align-items-end">
+                <div class="row justify-content-evenly">
+                    <div class="col-2">
+                        <a th:href="@{/upload-schedule}" class="btn btn-primary  btn-sm"> New </a>
+                    </div>
+                    <div class="col-3">
+                        <a class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            Filter
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li th:each="status : ${staticStatus}">
+                                <a class="dropdown-item"
+                                    th:href="@{/page/{pageNo}(pageNo=1, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${status})}"
+                                    th:text="${status}">Link Text</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-3 btn-group">
+                        <a class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            Download
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li th:each="status : ${staticStatus}">
+                                <a class="dropdown-item" th:href="@{/download/{status}(status=${status})}"
+                                    th:text="${status}"></a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <table border="0" class="table table-responsive-md" th:unless="${errorMessage}">
+            <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" id="selectAllCheckbox" />
+                    </th>
+                    <th >
+                    </th>
+                    <th>
+                        <a
+                            th:href="@{'/page/' + ${currentPage} + '?sortField=status&sortDir=' + ${reverseSortDir}}">
+                            Status</a>
+                    </th>
+                    <th >
+                        <a th:href="@{'/page/' + ${currentPage} + '?sortField=name&sortDir=' + ${reverseSortDir}}">
+                            Procedure Name</a>
+                    </th>
+                    <th>
+                        <a
+                            th:href="@{'/page/' + ${currentPage} + '?sortField=lookUpName&sortDir=' + ${reverseSortDir}}">
+                            Look Up Name</a>
+                    </th>
+                    <th >Look Up Code</th>
+                    <th>
+                        <a
+                            th:href="@{'/page/' + ${currentPage} + '?sortField=editDistance&sortDir=' + ${reverseSortDir}}">
+                            Match Degree</a>
+                    </th>
+                    <th>Quantity</th>
+                    <th >Rate</th>
+                    <th  style="width: 100px;">  </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="procedure, i : ${procedures}" class="accept-icon reject-icon">
+                    <td>
+                        <input type="checkbox" class="recordCheckbox" th:id="${'checkbox_' + procedure.id}" name="selectedItems" th:value="${procedure.id}" />
+                    </td>
+                    <td>
+                        <span class="dot-icon"><i class="fas fa-ellipsis-v"></i></span>
+                    </td>
+                    <td>
+                        <a th:text="${procedure.status}"
+                            th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
+                        </a>
+
+                    </td>
+                    <td th:text="${procedure.name}"></td>
+                    <td th:text="${procedure.lookUpName}"></td>
+                    <td th:text="${procedure.lookUpCode}"></td>
+                    <!-- <td th:text="${procedure.editDistance}"></td> -->
+                    <td>
+                        <span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
+
+                    </td>
+                    <td th:text="${procedure.quantity}"></td>
+                    <td th:text="${procedure.rate}"></td>
+                    <td >
+                        <div class="row justify-content-around">
+                            <span class="accept-icon action-icon-accept col-6">
+                                <a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}" class="action-icon-accept">
+                                <i class="fas fa-check-circle "></i>
+                            </a></span>
+                            <span class="reject-icon action-icon-reject col-6">
+                                <a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}" class="action-icon-reject">
+                                    <i class="fas fa-times-circle"></i>
+                                </a>
+                            </span>
+                        </div>
+                        
+
+                        <!-- <a th:text="${procedure.status.toString().equals('ACCEPTED') ? procedure.status : ''}"
+                            class="baseclass"
+                            th:classappend="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success disabled' : 'hidden'">
+                            Accepted
+                        </a>
+                        <div class="row">
+                            <div class="col-6">
+                                <a th:text="${procedure.status.toString().equals('UNACCEPTED')  || procedure.status.toString().equals('REJECTED')? 'ACCEPT' : ''}"
+                                    th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
+                                    class="baseclass"
+                                    th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-warning'">
+                                    Accept
+                                </a>
+                            </div>
+
+                            <div class="col-6">
+                                <a th:text="${procedure.status.toString().equals('UNACCEPTED') || procedure.status.toString().equals('REJECTED') ? 'REJECT' : ''}"
+                                    th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
+                                    class="baseclass"
+                                    th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-danger'">
+                                    Reject
+                                </a>
+                            </div> -->
+                        <!-- </div> -->
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div th:if="${totalPages > 1}">
+            <div class="row col-sm-10">
+                <div class="col-sm-2">
+                    Total Rows: [[${totalItems}]]
+                </div>
+                <div class="col-sm-8">
+                    <span th:each="i: ${#numbers.sequence(1, totalPages)}">
+                        <a th:if="${currentPage != i}"
+                            th:href="@{'/page/' + ${i}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">[[${i}]]</a>
+                        <span th:unless="${currentPage != i}">[[${i}]]</span> &nbsp; &nbsp;
+                    </span>
+                </div>
+                <div class="col-sm-1">
+                    <a th:if="${currentPage < totalPages}"
+                        th:href="@{'/page/' + ${currentPage + 1}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query}+ '&statuses=' + ${statuses}}">Next</a>
+                    <span th:unless="${currentPage < totalPages}">Next</span>
+                </div>
+
+                <div class="col-sm-1">
+                    <a th:if="${currentPage < totalPages}"
+                        th:href="@{'/page/' + ${totalPages}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">Last</a>
+                    <span th:unless="${currentPage < totalPages}">Last</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div className="footer container-fluid"></div>
+</div>
+
+[
+Procedure(
+    id=472, 
+    procedureClass=LIPID-REGULATING,
+    name=ATORVASTATIN 20MG TABLET, 
+    lookUpName=ATORVASTATIN 40MG TABLET, 
+    lookUpCode=DRGS00418, 
+    quantity=1TABLET, 
+    rate=135, 
+    editDistance=1, 
+    status=REJECTED), 
+Procedure(
+    id=473, 
+    procedureClass=LIPID-REGULATING, 
+    name=ATORVASTATIN 40MG TABLET, 
+    lookUpName=ATORVASTATIN 40MG TABLET, 
+    lookUpCode=DRGS00418, 
+    quantity=1TABLET, 
+    rate=162, 
+    editDistance=0, 
+    status=REJECTED), 
+Procedure(
+    id=474, 
+    procedureClass=LIPID-REGULATING, 
+    name=ROSUVASTATIN 10MG TABLET, 
+    lookUpName=ATORVASTATIN 40MG TABLET, 
+    lookUpCode=DRGS00418, 
+    quantity=1TABLET, 
+    rate=162, 
+    editDistance=5, 
+    status=REJECTED), 
+Procedure(
+    id=478, 
+    procedureClass=LIPID-REGULATING, 
+    name=SIMVASTATIN 40MG TABLET, 
+    lookUpName=ATORVASTATIN 40MG TABLET, 
+    lookUpCode=DRGS00418, 
+    quantity=1TABLET, 
+    rate=81, 
+    editDistance=4, 
+    status=REJECTED), 
+Procedure(
+    id=471, 
+    procedureClass=LIPID-REGULATING, 
+    name=ATORVASTATIN 10MG TABLET, 
+    lookUpName=ATORVASTATIN 40MG TABLET, 
+    lookUpCode=DRGS00418, 
+    quantity=1TABLET, 
+    rate=108, 
+    editDistance=1, 
+    status=ACCEPTED
+)]
+
+Updated records [
+Procedure(
+    id=322, 
+    procedureClass=ANTI-HYPERTENSIVE DR, 
+    name=MODURETIC TABLET (UK), 
+    lookUpName=MODURETIC TABS, 
+    lookUpCode=DRGS03544, 
+    quantity=1TABLET, 
+    rate=162, 
+    editDistance=8, 
+    status=REJECTED), 
+Procedure(
+    id=321, 
+    procedureClass=ANTI-HYPERTENSIVE DR, 
+    name=MODURETIC TAB, 
+    lookUpName=MODURETIC TABS, 
+    lookUpCode=DRGS03544, 
+    quantity=1TABLET, 
+    rate=162, 
+    editDistance=1, 
+    status=ACCEPTED
+)]
+
+package net.queencoder.springboot.service;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.univocity.parsers.common.record.Record;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
+
+import net.queencoder.springboot.model.CbaProcedure;
+import net.queencoder.springboot.model.Drug;
+import net.queencoder.springboot.repository.CbaProcedureRepository;
+import net.queencoder.springboot.repository.DrugRepository;
+
+@Service
+public class DrugServiceImpl implements DrugService {
+
+	@Autowired
+	private DrugRepository drugRepository;
+
+	@Autowired
+	private CbaProcedureRepository cbaProcedureRepository;
+
+	@Override
+	public List<CbaProcedure> getAllCbaPrecedures() {
+		return cbaProcedureRepository.findAll();
+	}
+	@Override
+	public List<Drug> getAllMatches() {
+		return drugRepository.findAll();
+	}
+
+	// @Override
+	// public List<Drug> uploadData(MultipartFile file) throws Exception {
+	// 	if(getAllMatches().equals(null)) {
+	// 		throw new RuntimeException("Some records already exists. Download matches first");
+	// 	}else {
+	// 	InputStream inputStream;
+	// 	inputStream = file.getInputStream();
+	// 	CsvParserSettings setting = new CsvParserSettings();
+	// 	setting.setHeaderExtractionEnabled(true);
+	// 	CsvParser parser = new CsvParser(setting);
+	// 	List<Record> parseAllRecords = parser.parseAllRecords(inputStream);
+	// 	return saveMatches(matchProcedures(parseAllRecords));}
+	// }
+
+	@Override
+	public List<Drug> uploadData(MultipartFile file) {
+		if (getAllMatches() != null) {
+			throw new RuntimeException("Some records already exist. Download matches first");
+		}
+
+		try (InputStream inputStream = file.getInputStream()) {
+			List<Record> parsedRecords = parseCsvRecords(inputStream);
+
+			List<Drug> matchedDrugs = matchAndSaveRecords(parsedRecords);
+			return matchedDrugs;
+		} catch (IOException e) {
+			throw new RuntimeException("Error reading the uploaded file", e);
+		}
+	}
+
+	private List<Record> parseCsvRecords(InputStream inputStream) {
+		CsvParserSettings settings = new CsvParserSettings();
+		settings.setHeaderExtractionEnabled(true);
+		CsvParser parser = new CsvParser(settings);
+		return parser.parseAllRecords(inputStream);
+	}
+
+	private List<Drug> matchAndSaveRecords(List<Record> uploadedRecords) {
+		List<Drug> matchedDrugs = new ArrayList<>();
+	
+		List<Drug> existingDrugs = getAllExistingDrugsFromDatabase(); // Retrieve existing drugs from the database
+	
+		for (Record uploadedRecord : uploadedRecords) {
+			Drug bestMatch = findBestMatchingDrug(uploadedRecord, existingDrugs);
+			
+			if (bestMatch != null) {
+				matchedDrugs.add(bestMatch);
+			}
+		}
+	
+		// Save the matched drugs to the database or perform other necessary actions
+	
+		return matchedDrugs;
+	}
+	private Drug findBestMatchingDrug(Record uploadedRecord, List<Drug> existingDrugs) {
+		int bestEditDistance = Integer.MAX_VALUE;
+		Drug bestMatch = null;
+	
+		for (Drug existingDrug : existingDrugs) {
+			int editDistance = eD2(uploadedRecord.getName(), existingDrug.getName(), uploadedRecord.getName().length(), existingDrug.getName().length());
+			
+			if (editDistance < bestEditDistance) {
+				bestEditDistance = editDistance;
+				bestMatch = existingDrug;
+			}
+		}
+	
+		// You can set a threshold for edit distance to determine whether it's a good match
+		// For example, if (bestEditDistance <= threshold) { ... }
+	
+		return bestMatch;
+	}
+	
+	private List<Drug> getAllExistingDrugsFromDatabase() {
+		// Fetch existing drugs from the database and return them as a list
+	}	
+
+	@Override
+	public List<Drug> saveMatches(List<Drug> drug) {
+		return drugRepository.saveAll(drug);
+	}
+
+	@Override
+	public List<Drug> matchProcedures(List<Record> records) {
+
+		List<CbaProcedure> procedureList = getAllCbaPrecedures();
+		List<Drug> druglist = new ArrayList<>();
+
+		if (procedureList != null) {
+			records.forEach(record -> {
+
+				for (int i = 0; i < procedureList.size(); i++) {
+
+					Drug drug = new Drug();
+
+					int m = record.getString("Drug Name").length();
+					int n = procedureList.get(i).getProcedureName().length();
+
+					int edit_dist = eD2(record.getString("Drug Name"), procedureList.get(i).getProcedureName(), m, n);
+
+					if (getMatch(record.getString("Drug Name"), procedureList.get(i).getProcedureName(),
+							edit_dist) == true) {
+
+						drug.setMatchName(procedureList.get(i).getProcedureName());
+						drug.setMatchCode(procedureList.get(i).getProcedureCode());
+						drug.setFlag(false);
+						drug.setStatus(false);
+						drug.setEditDistance(edit_dist);
+						drug.setDrugClass(record.getString("Drug Class"));
+						drug.setDrugName(record.getString("Drug Name"));
+						drug.setQuantity(record.getString("Quantity"));
+						drug.setRate(record.getString("Rate"));
+						druglist.add(drug);
+
+					}
+
+				}
+			});
+		}
+
+		return druglist;
+	}
+
+	@Override
+	public List<Drug> getMatchesById(long id) {
+		Drug existingMatch = drugRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Could not find the id " + id));
+
+		return filterMatches(getAllMatches(), existingMatch);
+	}
+
+	private List<Drug> filterMatches(List<Drug> matches, Drug existingMatch) {
+		List<Drug> possibleMatches = matches.stream()
+				.filter(data -> data.equals(existingMatch.getMatchName()) && data.isStatus() == false)
+				.collect(Collectors.toList());
+		return possibleMatches;
+	}
+
+	@Override
+	public Drug updateMatches(long id) {
+		List<Drug> valueToSave = new ArrayList<>();
+		Drug selectedMatch = drugRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Could not find the id " + id));
+
+		List<Drug> possibleMatches = getAllMatches().stream()
+				.filter(data -> data.isStatus() == true && data.getDrugName() == selectedMatch.getDrugName())
+				.collect(Collectors.toList());
+
+		if (possibleMatches.size() != 1) {
+			throw new IllegalStateException();
+		}
+		Drug recordToUpdate = possibleMatches.get(0);
+		recordToUpdate.setStatus(false);
+		selectedMatch.setStatus(true);
+
+		valueToSave.add(recordToUpdate);
+		valueToSave.add(selectedMatch);
+		drugRepository.saveAll(valueToSave);
+
+		return null;
+	}
+
+	@Override
+	public List<Drug> getAccurateMatch() {
+		List<Drug> procedureList = getAllMatches();
+		List<Drug> druglist = new ArrayList<>();
+		if (procedureList != null) {
+			int minMatch = Integer.MAX_VALUE;
+			Drug drug = new Drug();
+			for(int i = 0; i < procedureList.size(); i++) {
+				if(anagram(procedureList.get(i).getDrugName(), procedureList.get(i).getMatchName())) {
+					druglist.add(procedureList.get(i));
+				}else {
+					List<Drug> list = filterMatches(procedureList,procedureList.get(i));
+					Drug temp = new Drug();
+//					for(int j = 0; j < list.size(); j++) {
+//						if(list.get(j).getEditDistance() <= minMatch) {
+//							minMatch = procedureList.get(j).getEditDistance();
+//							temp = procedureList.get(j);
+//							//druglist.add(procedureList.get(j));
+//						}
+//					}
+//					druglist.add(temp);
+				}
+			}
+
+//////			for (int i = 0; i < procedureList.size(); i++) {
+//////
+//////				if (anagram(procedureList.get(i).getDrugName(), procedureList.get(i).getMatchName())) {
+//////					drug.setStatus(true);
+//////					drug.setDrugClass(procedureList.get(i).getDrugClass());
+//////					drug.setDrugName(procedureList.get(i).getDrugName());
+//////					drug.setEditDistance(procedureList.get(i).getEditDistance());
+//////					drug.setFlag(procedureList.get(i).isStatus());
+//////					drug.setMatchCode(procedureList.get(i).getMatchCode());
+//////					drug.setMatchName(procedureList.get(i).getMatchName());
+//////					drug.setQuantity(procedureList.get(i).getQuantity());
+//////					drug.setRate(procedureList.get(i).getRate());
+//////				} else if (procedureList.get(i).getEditDistance() <= minMatch) {
+//////					minMatch = procedureList.get(i).getEditDistance();
+//////					drug.setStatus(true);
+//////					drug.setDrugClass(procedureList.get(i).getDrugClass());
+//////					drug.setDrugName(procedureList.get(i).getDrugName());
+//////					drug.setEditDistance(procedureList.get(i).getEditDistance());
+//////					drug.setFlag(procedureList.get(i).isStatus());
+//////					drug.setMatchCode(procedureList.get(i).getMatchCode());
+//////					drug.setMatchName(procedureList.get(i).getMatchName());
+//////					drug.setQuantity(procedureList.get(i).getQuantity());
+//////					drug.setRate(procedureList.get(i).getRate());
+//////				}
+////				druglist.add(drug);
+//
+//			}
+		}
+		return druglist;
+	}
+
+	@Override
+	public String authoriseMatch(long id) {
+		Drug existDrugs = drugRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Could not find the id " + id));
+		existDrugs.setFlag(true);
+		existDrugs.setStatus(true);
+		drugRepository.save(existDrugs);
+		deleteAllMatchesWhereIdIs(existDrugs);
+		return "Success";
+	}
+
+	@Override
+	public void deleteAllMatchesWhereIdIs(Drug existDrugs) {
+		List<Drug> deleteUnusedMatches = getAllMatches().stream().filter(data -> data.isStatus() == false
+				&& data.isFlag() == false && data.getDrugName().equals(existDrugs.getDrugName()))
+				.collect(Collectors.toList());
+		drugRepository.deleteAll(deleteUnusedMatches);
+	}
+
+	// This method returns the max length between the Strings
+	private int getLen(int m, int n) {
+		return Math.max(m, n);
+	}
+
+	// This method handles the percentage of matching
+	private boolean getMatch(String str1, String str2, int edit_dist) {
+		int m = str1.length(), n = str2.length();
+
+		double percentage = 0.7;
+		int maxMatch = (int) (getLen(m, n) * percentage);
+		if (edit_dist < maxMatch) {
+			return true;
+		}
+		return false;
+
+	}
+
+	// This method is the edit distance dynamic programming solution
+	static int eD2(String s1, String s2, int m, int n) {
+		int dp[][] = new int[m + 1][n + 1];
+
+		for (int i = 0; i <= m; i++) {
+			dp[i][0] = i;
+		}
+
+		for (int j = 0; j <= n; j++) {
+			dp[0][j] = j;
+		}
+
+		for (int i = 1; i <= m; i++) {
+			for (int j = 1; j <= n; j++) {
+				if (s1.charAt(i - 1) == s2.charAt(j - 1)) {
+					dp[i][j] = dp[i - 1][j - 1];
+				} else {
+					dp[i][j] = 1 + Math.min(dp[i - 1][j], Math.min(dp[i][j - 1], dp[i - 1][j - 1]));
+
+				}
+			}
+		}
+
+		return dp[m][n];
+	}
+
+	// This method ensures that the ED is less that the max length
+	static final int CHAR = 256;
+
+	public boolean anagram(String str1, String str2) {
+		int m = str1.length(), n = str2.length();
+
+		int count[] = new int[CHAR];
+		if (n != m) {
+			return false;
+		}
+		for (int i = 0; i < n; i++) {
+			count[str1.charAt(i)]++;
+			count[str2.charAt(i)]--;
+		}
+		for (int i = 0; i < CHAR; i++) {
+			if (count[i] != 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+}
+public List<Drug> matchProcedures(List<Record> records);
+	public List<Drug> saveMatches(List<Drug> drug);
+	public List<Drug> getAllMatches();
+	public List<CbaProcedure> getAllCbaPrecedures();
+	public List<Drug> getMatchesById(long id);
+	public List<Drug>getAccurateMatch();
+	public Drug updateMatches(long id);
+	public void deleteAllMatchesWhereIdIs(Drug drug);
+	public String authoriseMatch(long id);
+//	public List<CbaProcedure>findPossibleMatches(long id);
+//	public List<CbaProcedure> getAllCbaPrecedures();
+//	public List<Drug> findAcurateMatches(MultipartFile file) throws Exception;
+//	public List<Record> uploadReceivedProcedures(MultipartFile file) throws Exception;
+//	public Drug updateProcedure(CbaProcedure cbaProcedure, long id);
+
+// display list of employees
+@GetMapping("/view-matches")
+public String viewHomePage(Model model) {
+	model.addAttribute("drugs", procedureService.getAllMatches());
+	return "all_matches";
+}
+
+@GetMapping("/authorise/{id}")
+public String authorisedMatch(@PathVariable(value = "id") long id) {
+	procedureService.authoriseMatch(id);
+	return "redirect:/view-matches";
+}
+@GetMapping("/matches/{id}")
+public String possibleMatch(@PathVariable(value = "id") long id, Model model) {
+	List<Drug> matches = procedureService.getMatchesById(id);
+	model.addAttribute("matches", matches);
+	return "redirect:/view-matches";
+}
+@PutMapping("/update/{id}")
+public String UpdateProcedure(@PathVariable(value = "id") long id) {
+	drugService.updateMatches(id);
+	return "redirect:/view-matches";
+}
+
+<td>
+	<span ><i class="fas fa-trash-alt"></i></span>
+
+	<input type="checkbox" th:id="${'checkbox_' + procedure.id}" name="selectedItems" th:value="${procedure.id}"/>
+</td>
+<td>
+	<a th:text="${procedure.status}"
+		th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
+	</a>
+
+</td>
+<td th:text="${procedure.name}"></td>
+<td th:text="${procedure.lookUpName}"></td>
+<td th:text="${procedure.lookUpCode}"></td>
+<!-- <td th:text="${procedure.editDistance}"></td> -->
+<td>
+	<span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
+
+</td>
+<td th:text="${procedure.quantity}"></td>
+<td th:text="${procedure.rate}"></td>
+<td>
+	<!-- <a th:text="${procedure.status.toString().equals('ACCEPTED') ? procedure.status : ''}"
+		class="baseclass"
+		th:classappend="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success disabled' : 'hidden'">
+		Accepted
+	</a>
+	<div class="row">
+		<div class="col-6">
+			<a th:text="${procedure.status.toString().equals('UNACCEPTED')  || procedure.status.toString().equals('REJECTED')? 'ACCEPT' : ''}"
+				th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
+				class="baseclass"
+				th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-warning'">
+				Accept
+			</a>
+		</div>
+
+		<div class="col-6">
+			<a th:text="${procedure.status.toString().equals('UNACCEPTED') || procedure.status.toString().equals('REJECTED') ? 'REJECT' : ''}"
+				th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
+				class="baseclass"
+				th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-danger'">
+				Reject
+			</a>
+		</div> -->
+	<!-- </div> -->
+
+</td>
