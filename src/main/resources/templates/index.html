@@ -27,198 +27,196 @@
 		</div>
 	</nav>
 	<main class="container">
-		<h2><span th:if="${errorMessage}" th:text="${errorMessage}">Error</span></h2>
+		<!-- <h2><span th:if="${errorMessage}" th:text="${errorMessage}">Error</span></h2> -->
 		<!-- <h1 th:unless="${errorMessage}">List of Matched Procedures</h1> -->
-		<div class="row">
-			<div class="row sub-header">
-				<div id="buttonContainer" class="action-icons col-md-8">
-					<span class="col-4 float-left">
-						<form th:action="@{/bulkAccept}" method="get">
-							<input type="hidden"  id="acceptSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
-							<button id="acceptButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-check-circle"></i> 
-							</button>
-						</form>
-					</span>					
-					<span class="col-4 float-left">
-						<form th:action="@{/bulkReject}" method="get">
-							<input type="hidden"  id="rejectSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
-							<button id="rejectButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-times-circle"></i>
-							</button>
-						</form>
-					</span>		
-					<span class="col-4 float-left">
-						<form th:action="@{/bulkDownload}" method="get">
-							<input type="hidden" id="downloadSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}"/>
-							<button id="downloadButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-download"></i>
-							</button>
-						</form>
-					</span>					
+		<div class="subHeader">
+			<div  id="buttonContainer" class="dynamicIcons">
+				<div class="acceptIcon">
+					<form th:action="@{/bulkAccept}" method="get">
+						<input type="hidden"  id="acceptSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
+						<button id="acceptButton" type="submit" class="btn btn-link p-0">
+							<i class="fas fa-check-circle fa-2x acceptIconStyle"></i> 
+						</button>
+					</form>
 				</div>
-				<div class="row action-button col-md-4 float-left">
-					<div class="new col-7 float-right">
-						<a th:href="@{/upload-schedule}" class="btn btn-primary btn-sm">New</a>
-					</div>
-					<div class="filter col-2 float-right">
-						<a class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-							Filter
-						</a>
-						<ul class="dropdown-menu">
-							<li th:each="status : ${staticStatus}">
-								<a class="dropdown-item"
-									th:href="@{/page/{pageNo}(pageNo=1, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${status})}"
-									th:text="${status}">Link Text</a>
-							</li>
-						</ul>
-					</div>
+				<div class="rejectIcon">
+					<form th:action="@{/bulkReject}" method="get">
+						<input type="hidden"  id="rejectSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
+						<button id="rejectButton" type="submit" class="btn btn-link p-0">
+							<i class="fas fa-times-circle fa-2x rejectIconStyle"></i>
+						</button>
+					</form>
+				</div>
+				<div class="downloadIcon">
+					<form th:action="@{/bulkDownload}" method="get">
+						<input type="hidden" id="downloadSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}"/>
+						<button id="downloadButton" type="submit" class="btn btn-link p-0">
+							<i class="fas fa-download fa-2x downloadIconStyle"></i>
+						</button>
+					</form>
 				</div>
 			</div>
-			
-			<div class="content">
-				<table border="0" class="table table-responsive-md" th:unless="${errorMessage}">
-					<thead>
-						<tr>
-							<th>
-								<input type="checkbox" id="selectAllCheckbox" />
-							</th>
-							<th>
-								
-							</th>
-							<th>
-								<a
-									th:href="@{'/page/' + ${currentPage} + '?sortField=status&sortDir=' + ${reverseSortDir}}">
-									Status</a>
-							</th>
-							<th>
-								<a
-									th:href="@{'/page/' + ${currentPage} + '?sortField=name&sortDir=' + ${reverseSortDir}}">
-									Procedure Name</a>
-							</th>
-							<th>
-								<a
-									th:href="@{'/page/' + ${currentPage} + '?sortField=lookUpName&sortDir=' + ${reverseSortDir}}">
-									Look Up Name</a>
-							</th>
-							<th>Look Up Code</th>
-							<th>
-								<a
-									th:href="@{'/page/' + ${currentPage} + '?sortField=editDistance&sortDir=' + ${reverseSortDir}}">
-									Match Degree</a>
-							</th>
-							<th>Quantity</th>
-							<th>Rate</th>
-							<th style="width: 100px;"> </th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr th:each="procedure, i : ${procedures}" class="accept-icon reject-icon">
-							<td>
-								<input type="checkbox" class="recordCheckbox" th:id="${'checkbox_' + procedure.id}"
-									name="selectedItems" th:value="${procedure.id}" />
-							</td>
-							<td>
-								<span >
-									<a 
-										>
+			<div class="actionButtons">
+				<div class="newButton">
+					<a th:href="@{/upload-schedule}" class="buttonSize">
+						<button class="custom-button">New</button>
+					</a>
+				</div>
+				<div class="filterButton">
+					<a class="custom-btn dropdown-toggle" data-toggle="dropdown" aria-expanded="false" style="color: #fff;">
+						Filter 
+					</a>
+					<ul class="dropdown-menu">
+						<li th:each="status : ${staticStatus}">
+							<a class="custom-dropdown-item"
+							   th:href="@{/page/{pageNo}(pageNo=1, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${status})}"
+							   th:text="${status}">Link Text</a>
+						</li>
+					</ul>
+				</div>					
+			</div>
+		</div>
+		<div class="content">
+			<table border="0" class="table table-responsive-md" th:unless="${errorMessage}">
+				<thead>
+					<tr>
+						<th>
+							<input type="checkbox" id="selectAllCheckbox" />
+						</th>
+						<th>
+							
+						</th>
+						<th>
+							<a
+								th:href="@{'/page/' + ${currentPage} + '?sortField=status&sortDir=' + ${reverseSortDir}}">
+								Status</a>
+						</th>
+						<th>
+							<a
+								th:href="@{'/page/' + ${currentPage} + '?sortField=name&sortDir=' + ${reverseSortDir}}">
+								Procedure Name</a>
+						</th>
+						<th>
+							<a
+								th:href="@{'/page/' + ${currentPage} + '?sortField=lookUpName&sortDir=' + ${reverseSortDir}}">
+								Look Up Name</a>
+						</th>
+						<th>Look Up Code</th>
+						<th>
+							<a
+								th:href="@{'/page/' + ${currentPage} + '?sortField=editDistance&sortDir=' + ${reverseSortDir}}">
+								Match Degree</a>
+						</th>
+						<th>Quantity</th>
+						<th>Rate</th>
+						<th style="width: 100px;"> </th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="procedure, i : ${procedures}" class="accept-icon reject-icon">
+						<td>
+							<input type="checkbox" class="recordCheckbox" th:id="${'checkbox_' + procedure.id}"
+								name="selectedItems" th:value="${procedure.id}" />
+						</td>
+						<td>
+							<span >
+								<a 
+									>
+									<i class="fas fa-check-circle "></i>
+								</a>
+							</span>
+						</td>
+						<td>
+							<a th:text="${procedure.status}"
+								th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
+							</a>
+
+						</td>
+						<td th:text="${procedure.name}"></td>
+						<td th:text="${procedure.lookUpName}"></td>
+						<td th:text="${procedure.lookUpCode}"></td>
+						<!-- <td th:text="${procedure.editDistance}"></td> -->
+						<td>
+							<span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
+
+						</td>
+						<td th:text="${procedure.quantity}"></td>
+						<td th:text="${procedure.rate}"></td>
+						<td>
+							<div class="row justify-content-around">
+								<span class="accept-icon action-icon-accept col-6">
+									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
+										class="action-icon-accept">
 										<i class="fas fa-check-circle "></i>
+									</a></span>
+								<span class="reject-icon action-icon-reject col-6">
+									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
+										class="action-icon-reject">
+										<i class="fas fa-times-circle"></i>
 									</a>
 								</span>
-							</td>
-							<td>
-								<a th:text="${procedure.status}"
-									th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
-								</a>
+							</div>
 
-							</td>
-							<td th:text="${procedure.name}"></td>
-							<td th:text="${procedure.lookUpName}"></td>
-							<td th:text="${procedure.lookUpCode}"></td>
-							<!-- <td th:text="${procedure.editDistance}"></td> -->
-							<td>
-								<span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
 
-							</td>
-							<td th:text="${procedure.quantity}"></td>
-							<td th:text="${procedure.rate}"></td>
-							<td>
-								<div class="row justify-content-around">
-									<span class="accept-icon action-icon-accept col-6">
-										<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
-											class="action-icon-accept">
-											<i class="fas fa-check-circle "></i>
-										</a></span>
-									<span class="reject-icon action-icon-reject col-6">
-										<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
-											class="action-icon-reject">
-											<i class="fas fa-times-circle"></i>
-										</a>
-									</span>
+							<!-- <a th:text="${procedure.status.toString().equals('ACCEPTED') ? procedure.status : ''}"
+								class="baseclass"
+								th:classappend="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success disabled' : 'hidden'">
+								Accepted
+							</a>
+							<div class="row">
+								<div class="col-6">
+									<a th:text="${procedure.status.toString().equals('UNACCEPTED')  || procedure.status.toString().equals('REJECTED')? 'ACCEPT' : ''}"
+										th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
+										class="baseclass"
+										th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-warning'">
+										Accept
+									</a>
 								</div>
 
+								<div class="col-6">
+									<a th:text="${procedure.status.toString().equals('UNACCEPTED') || procedure.status.toString().equals('REJECTED') ? 'REJECT' : ''}"
+										th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
+										class="baseclass"
+										th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-danger'">
+										Reject
+									</a>
+								</div> -->
+							<!-- </div> -->
 
-								<!-- <a th:text="${procedure.status.toString().equals('ACCEPTED') ? procedure.status : ''}"
-									class="baseclass"
-									th:classappend="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success disabled' : 'hidden'">
-									Accepted
-								</a>
-								<div class="row">
-									<div class="col-6">
-										<a th:text="${procedure.status.toString().equals('UNACCEPTED')  || procedure.status.toString().equals('REJECTED')? 'ACCEPT' : ''}"
-											th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
-											class="baseclass"
-											th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-warning'">
-											Accept
-										</a>
-									</div>
-	
-									<div class="col-6">
-										<a th:text="${procedure.status.toString().equals('UNACCEPTED') || procedure.status.toString().equals('REJECTED') ? 'REJECT' : ''}"
-											th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
-											class="baseclass"
-											th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-danger'">
-											Reject
-										</a>
-									</div> -->
-								<!-- </div> -->
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div th:if="${totalPages > 1}" class="container-fluid pagination">
+			<div class="row col-sm-12">
+				<div class="col-sm-2">
+					Total Rows: [[${totalItems}]]
+				</div>
+				<div class="col-sm-8">
+					<span th:each="i: ${#numbers.sequence(1, totalPages)}">
+						<a th:if="${currentPage != i}"
+							th:href="@{'/page/' + ${i}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">[[${i}]]</a>
+						<span th:unless="${currentPage != i}">[[${i}]]</span> &nbsp; &nbsp;
+					</span>
+				</div>
+				<div class="col-sm-1">
+					<a th:if="${currentPage < totalPages}"
+						th:href="@{'/page/' + ${currentPage + 1}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query}+ '&statuses=' + ${statuses}}">Next</a>
+					<span th:unless="${currentPage < totalPages}">Next</span>
+				</div>
 
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<div th:if="${totalPages > 1}" class="container-fluid pagination">
-				<div class="row col-sm-12">
-					<div class="col-sm-2">
-						Total Rows: [[${totalItems}]]
-					</div>
-					<div class="col-sm-8">
-						<span th:each="i: ${#numbers.sequence(1, totalPages)}">
-							<a th:if="${currentPage != i}"
-								th:href="@{'/page/' + ${i}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">[[${i}]]</a>
-							<span th:unless="${currentPage != i}">[[${i}]]</span> &nbsp; &nbsp;
-						</span>
-					</div>
-					<div class="col-sm-1">
-						<a th:if="${currentPage < totalPages}"
-							th:href="@{'/page/' + ${currentPage + 1}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query}+ '&statuses=' + ${statuses}}">Next</a>
-						<span th:unless="${currentPage < totalPages}">Next</span>
-					</div>
-
-					<div class="col-sm-1">
-						<a th:if="${currentPage < totalPages}"
-							th:href="@{'/page/' + ${totalPages}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">Last</a>
-						<span th:unless="${currentPage < totalPages}">Last</span>
-					</div>
+				<div class="col-sm-1">
+					<a th:if="${currentPage < totalPages}"
+						th:href="@{'/page/' + ${totalPages}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">Last</a>
+					<span th:unless="${currentPage < totalPages}">Last</span>
 				</div>
 			</div>
 		</div>
 	</main>
 
-	<footer>
-		<!-- Footer content here -->
-	</footer>
+	<!-- <footer>
+	</footer> -->
 
 	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
