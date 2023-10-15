@@ -119,13 +119,15 @@
 								name="selectedItems" th:value="${procedure.id}" />
 						</td>
 						<td>
-							<span >
-								<a 
-									>
-									<i class="fas fa-check-circle "></i>
-								</a>
+							<span class="menu-container">
+								<a class="custom-link"><i class="fas fa-ellipsis-v" style="size: 2em;"></i></a>
+								<ul class="menu">
+									<li><a href="#">Matches</a></li><hr/>
+									<li><a href="#">View</a></li><hr/>
+									<li><a href="#">Edit</a></li>
+								</ul>
 							</span>
-						</td>
+						</td>						
 						<td>
 							<a th:text="${procedure.status}"
 								th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
@@ -222,6 +224,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 	<script src="/js/checkbox_bulk_selection.js"></script>
+	<script src="/js/three_dot_icon.js"></script>
 </body>
 
 </html>

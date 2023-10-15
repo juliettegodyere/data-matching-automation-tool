@@ -171,13 +171,16 @@ footer {
     background-color: white;
     border-radius: 30px;
 }
+.icons .fas{
+    font-size: xx-large;
+}
+tr:hover{
+    background-color:aliceblue;
+}
 /* Hide the icons by default */
 .accept-icon .fas,
 .reject-icon .fas {
     display: none;
-}
-.icons .fas{
-    font-size: xx-large;
 }
 
 /* Show the icons when hovering over the table row */
@@ -185,13 +188,45 @@ tr.accept-icon:hover .accept-icon .fas,
 tr.reject-icon:hover .reject-icon .fas {
     display: inline-block;
 }
-tr:hover{
-    background-color:aliceblue;
+
+/* Exclude custom-link from the icon styling */
+.custom-link .fas {
+    display: inline-block !important; /* Override the display: none; */
 }
-.dot-icon{
-    color: blue;
-    font-size: xx-large;
+
+.menu-container {
+    position: relative;
+    display: inline-block;
 }
+
+.menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    list-style: none;
+    padding: 10px 10px;
+    margin: 0;
+    text-decoration: none;
+}
+
+.menu li {
+    /* padding: 5px 10px; */
+    text-decoration: none;
+}
+
+.menu li a {
+    text-decoration: none; /* Remove underline */
+    color: #333; /* Set the desired text color */
+}
+
+.menu li:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
 footer {
     background-color: #333;
     color: white;
