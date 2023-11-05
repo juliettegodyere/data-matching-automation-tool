@@ -10,18 +10,5 @@ class SpringbootThymeleafFuzzyStringMatchApplicationTests {
 	void contextLoads() {
 	}
 
-	@Test
-	public void uploadCVFile(){
-
-	}
-
-	@Test
-	public void downloadCVFile(){
-		
-	}
-
-	@Test
-	public void getAllMatchedProceduresAndDisplayOnTheHomePage(){
-		
-	}
+	
 }

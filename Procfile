@@ -1,2 +1,1 @@
-web: java $JAVA_OPTS -cp target/classes:target/dependency/* net.queencoder.springboot.SpringbootThymeleafFuzzyStringMatchApplication
-
+web: java -jar springboot-thymeleaf-fuzzy-string-match-0.0.1-SNAPSHOT.jar
