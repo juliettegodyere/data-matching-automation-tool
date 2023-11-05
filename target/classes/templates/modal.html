@@ -31,15 +31,21 @@
 
 
 <body>
-    <!-- Add this to your Thymeleaf template -->
-<div th:if="${procedures.size() > 1}" th:remove="tag">
-    <script>
-        // Automatically open the modal when the page loads
-        window.onload = function() {
-            openModal();
-        };
-    </script>
-</div>
+    <div th:if="${procedures.size() <= 1}">
+		<div  class="alert alert-danger">
+			<a href="/page/1?sortField=editDistance&sortDir=asc&query=&statuses=UNACCEPTED"><span class="close" onclick="closeModal()">&times;</span></a>
+			<h2>No matches found for this record.</h2>
+		</div>
+	</div>
+	
+	<div th:if="${procedures.size() > 1}" th:remove="tag">
+		<script>
+			// Automatically open the modal when the page loads
+			window.onload = function() {
+				openModal();
+			};
+		</script>
+	</div>
     <!-- Modal -->
     <div id="myModal" class="modal container">
         <div class="modal-content">
@@ -48,49 +54,51 @@
                 <h2>If you rematch one record, other will be rejected.</h2>
             </div>
             <br/>
-            <div class="row sub-header">
-				<div id="buttonContainer" class="action-icons col-md-8">
-					<span class="col-4 float-left">
+            <div class="subHeader">
+				<div  id="buttonContainer" class="dynamicIcons">
+					<div class="acceptIcon">
 						<form th:action="@{/bulkAccept}" method="get">
 							<input type="hidden"  id="acceptSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
 							<button id="acceptButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-check-circle"></i> 
+								<i class="fas fa-check-circle fa-2x acceptIconStyle"></i> 
 							</button>
 						</form>
-					</span>					
-					<span class="col-4 float-left">
+					</div>
+					<div class="rejectIcon">
 						<form th:action="@{/bulkReject}" method="get">
 							<input type="hidden"  id="rejectSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
 							<button id="rejectButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-times-circle"></i>
+								<i class="fas fa-times-circle fa-2x rejectIconStyle"></i>
 							</button>
 						</form>
-					</span>		
-					<span class="col-4 float-left">
+					</div>
+					<div class="downloadIcon">
 						<form th:action="@{/bulkDownload}" method="get">
 							<input type="hidden" id="downloadSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}"/>
 							<button id="downloadButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-download"></i>
+								<i class="fas fa-download fa-2x downloadIconStyle"></i>
 							</button>
 						</form>
-					</span>					
-				</div>
-				<div class="row action-button col-md-4 float-left">
-					<div class="new col-7 float-right">
-						<a th:href="@{/upload-schedule}" class="btn btn-primary btn-sm">New</a>
 					</div>
-					<div class="filter col-2 float-right">
-						<a class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-							Filter
+				</div>
+				<div class="actionButtons">
+					<div class="newButton">
+						<a th:href="@{/upload-schedule}" class="buttonSize">
+							<button class="custom-button">New</button>
+						</a>
+					</div>
+					<div class="filterButton">
+						<a class="custom-btn dropdown-toggle" data-toggle="dropdown" aria-expanded="false" style="color: #fff;">
+							Filter 
 						</a>
 						<ul class="dropdown-menu">
 							<li th:each="status : ${staticStatus}">
-								<a class="dropdown-item"
-									th:href="@{/page/{pageNo}(pageNo=1, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${status})}"
-									th:text="${status}">Link Text</a>
+								<a class="custom-dropdown-item"
+								   th:href="@{/page/{pageNo}(pageNo=1, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${status})}"
+								   th:text="${status}">Link Text</a>
 							</li>
 						</ul>
-					</div>
+					</div>					
 				</div>
 			</div>
             <table  border="0" class="table table-responsive-md">
@@ -98,9 +106,6 @@
                     <tr>
                         <th>
                             <input type="checkbox" id="selectAllCheckbox" />
-                        </th>
-                        <th>
-                            
                         </th>
 						<th scope="col">
 							<a
@@ -149,13 +154,13 @@
                         <td th:text="${procedure.quantity}"></td>
                         <td th:text="${procedure.rate}"></td>
                         <td>
-                            <div class="row justify-content-evenly">
-								<span class="accept-icon action-icon-accept col-8">
-									<a th:href="@{/rematch/{id}(id=${procedure.id},status='accept')}" class="action-icon-accept">
+                            <div class="row justify-content-around">
+								<span class="accept-icon action-icon-accept col-6">
+									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}" class="action-icon-accept">
 									<i class="fas fa-check-circle"></i>
 								</a></span>
-								<span class="reject-icon action-icon-reject">
-									<a th:href="@{/rematch/{id}(id=${procedure.id},status='reject')}" class="action-icon-reject">
+								<span class="reject-icon action-icon-reject col-6">
+									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}" class="action-icon-reject">
 										<i class="fas fa-times-circle"></i>
 									</a>
 								</span>

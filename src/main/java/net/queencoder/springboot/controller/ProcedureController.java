@@ -116,19 +116,30 @@ public class ProcedureController {
         String referer = request.getHeader("Referer");
 
         if (lookupCodeResult.size() == 1) {
-            updateStatus(existingProcedure, status);
+            procedureService.updateStatus(existingProcedure, "accept".equals(status)? Status.ACCEPTED : Status.REJECTED);
         } else {
-            model.addAttribute("procedures", lookupCodeResult);
-            return "modal"; // Return the modal template view
+            procedureService.updateStatusInBatches(lookupCodeResult, "accept".equals(status)? Status.REJECTED : null);
+            procedureService.updateStatus(existingProcedure, "accept".equals(status)? Status.ACCEPTED : Status.REJECTED);
         }
         return "redirect:" + referer;
     }
 
-    private void updateStatus(Procedure procedure, String status) {
-        if ("accept".equals(status)) {
-            procedureService.updateStatus(procedure, Status.ACCEPTED);
-        } else if ("reject".equals(status)) {
-            procedureService.updateStatus(procedure, Status.REJECTED);
+    @GetMapping("/matches/{id}")
+    public String findAllMatches(
+            @PathVariable Long id,
+            HttpServletRequest request,
+            Model model) throws CustomNotFoundException {
+        Procedure existingProcedure = procedureService.findById(id);
+        List<Procedure> lookupCodeResult = procedureService.findByLookUpCode(existingProcedure);
+
+        String referer = request.getHeader("Referer");
+
+        if (lookupCodeResult != null && !lookupCodeResult.isEmpty()) {
+            model.addAttribute("procedures", lookupCodeResult);
+            return "modal";
+        } else {
+            model.addAttribute("message", "No matches found for this record");
+            return "modal"; // Return the same view to display the message
         }
     }
     
@@ -140,22 +151,10 @@ public class ProcedureController {
     ) throws CustomNotFoundException {
         String referer = request.getHeader("Referer");
         if (!recordIds.isEmpty()) {
-            // Loop through the selected record IDs and update their status to "ACCEPTED" in batches
-            List<Procedure> proceduresToUpdate = new ArrayList<>();
-            for (Long id : recordIds) {
-
-                Procedure existingProcedure = procedureService.findById(id);
-                List<Procedure> lookupCodeResult = procedureService.findByLookUpCode(existingProcedure);
-                existingProcedure.setStatus(Status.ACCEPTED);
-
-                List<Procedure> updatedProcedures = lookupCodeResult.stream()
-                .filter(record -> record.getId() != existingProcedure.getId())
-                .peek(record -> record.setStatus(Status.REJECTED))
-                .collect(Collectors.toList());
-                updatedProcedures.add(existingProcedure);
-                proceduresToUpdate.addAll(updatedProcedures);
-            }
-            procedureService.updateStatusInBatches(proceduresToUpdate);
+            List<Procedure> selectProcedures = procedureService.getAllById(recordIds);
+            procedureService.markProcedureAsRejected(selectProcedures);
+            
+            procedureService.updateStatusInBatches(selectProcedures, Status.ACCEPTED);
         }
 
         return "redirect:" + referer;
@@ -170,19 +169,9 @@ public class ProcedureController {
         String referer = request.getHeader("Referer");
         log.info("IDs {}", recordIds);
         if (!recordIds.isEmpty()) {
-            List<Procedure> proceduresToUpdate = new ArrayList<>();
-            for (Long id : recordIds) {
-
-                Procedure existingProcedure = procedureService.findById(id);
-                existingProcedure.setStatus(Status.REJECTED);
-                List<Procedure> updatedProcedures= new ArrayList<>();
-                
-                updatedProcedures.add(existingProcedure);
-                log.info("Updated records in Collection {}", updatedProcedures);
-                proceduresToUpdate.addAll(updatedProcedures);
-            }
-             log.info("Updated records in in DB {}", proceduresToUpdate);
-            procedureService.updateStatusInBatches(proceduresToUpdate);
+             List<Procedure> selectProcedures = procedureService.getAllById(recordIds);
+            
+            procedureService.updateStatusInBatches(selectProcedures, Status.REJECTED);
         }
 
         return "redirect:" + referer;
@@ -191,35 +180,35 @@ public class ProcedureController {
     /*
      * This method is to rematch records when CBA code matches to multiple records
      */
-    @GetMapping("/rematch/{id}")
-    public String rematchAndUpdateStatus(
-            @PathVariable Long id,
-             @RequestParam(value = "status") String status,
-            HttpServletRequest request,
-            Model model) throws CustomNotFoundException {
-        Procedure existingProcedure = procedureService.findById(id);
-        List<Procedure> lookupCodeResult = procedureService.findByLookUpCode(existingProcedure);
-          List<Procedure> updatedProcedures = new ArrayList<>();
+    // @GetMapping("/rematch/{id}")
+    // public String rematchAndUpdateStatus(
+    //         @PathVariable Long id,
+    //          @RequestParam(value = "status") String status,
+    //         HttpServletRequest request,
+    //         Model model) throws CustomNotFoundException {
+    //     Procedure existingProcedure = procedureService.findById(id);
+    //     List<Procedure> lookupCodeResult = procedureService.findByLookUpCode(existingProcedure);
+    //       List<Procedure> updatedProcedures = new ArrayList<>();
         
-        if("accept".equals(status)){
-            existingProcedure.setStatus(Status.ACCEPTED);
-             updatedProcedures = lookupCodeResult.stream()
-                .filter(record -> record.getId() != existingProcedure.getId())
-                .peek(record -> record.setStatus(Status.REJECTED))
-                .collect(Collectors.toList());
-        }else if ("reject".equals(status)) {
-               updatedProcedures = lookupCodeResult.stream()
-                .peek(record -> record.setStatus(Status.REJECTED))
-                .collect(Collectors.toList());
-        }
-        updatedProcedures.add(existingProcedure);
+    //     if("accept".equals(status)){
+    //         existingProcedure.setStatus(Status.ACCEPTED);
+    //          updatedProcedures = lookupCodeResult.stream()
+    //             .filter(record -> record.getId() != existingProcedure.getId())
+    //             .peek(record -> record.setStatus(Status.REJECTED))
+    //             .collect(Collectors.toList());
+    //     }else if ("reject".equals(status)) {
+    //            updatedProcedures = lookupCodeResult.stream()
+    //             .peek(record -> record.setStatus(Status.REJECTED))
+    //             .collect(Collectors.toList());
+    //     }
+    //     updatedProcedures.add(existingProcedure);
 
-        if (!updatedProcedures.isEmpty()) {
-            procedureService.updateStatusInBatches(updatedProcedures);
-        }
-        String referer = request.getHeader("Referer");
-        return "redirect:" + referer; // Redirect back to the original page
-    }
+    //     if (!updatedProcedures.isEmpty()) {
+    //         procedureService.updateStatusInBatches(updatedProcedures);
+    //     }
+    //     String referer = request.getHeader("Referer");
+    //     return "redirect:" + referer; // Redirect back to the original page
+    // }
 
     @GetMapping("/bulkDownload")
     public String bulkDownload(

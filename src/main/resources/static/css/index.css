@@ -191,41 +191,40 @@ tr.reject-icon:hover .reject-icon .fas {
 
 /* Exclude custom-link from the icon styling */
 .custom-link .fas {
-    display: inline-block !important; /* Override the display: none; */
+    display: inline-block !important; 
 }
 
 .menu-container {
-    position: relative;
-    display: inline-block;
+    position:absolute;
+    /* display: inline-block; */
 }
 
 .menu {
     display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
     background-color: white;
     border: 1px solid #ccc;
+    border-radius: 25;
     list-style: none;
     padding: 10px 10px;
-    margin: 0;
     text-decoration: none;
-}
+    margin-top: -25px;
+    margin-left: 10px;
+} 
 
-.menu li {
+.menu li { 
     /* padding: 5px 10px; */
-    text-decoration: none;
-}
+     text-decoration: none;
+} 
 
 .menu li a {
-    text-decoration: none; /* Remove underline */
-    color: #333; /* Set the desired text color */
+    text-decoration: none; 
+    color: #333; 
 }
 
 .menu li:hover {
     background-color: #f0f0f0;
     cursor: pointer;
-}
+} 
 
 footer {
     background-color: #333;

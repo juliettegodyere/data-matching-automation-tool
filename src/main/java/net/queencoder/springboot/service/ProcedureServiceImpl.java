@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -17,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +25,7 @@ import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
 import lombok.extern.slf4j.Slf4j;
+
 import net.queencoder.springboot.exception.CustomNotFoundException;
 import net.queencoder.springboot.model.Procedure;
 import net.queencoder.springboot.model.ProcedureLookUp;
@@ -105,20 +104,21 @@ public class ProcedureServiceImpl implements ProcedureService {
 	private List<Procedure> matchAndSaveRecords(List<Record> uploadedRecords) {
 		List<Procedure> matchedProcedures = new ArrayList<>();
 
-		List<ProcedureLookUp> existingProcedures = getAllExistingPrecedures(); // Retrieve existing drugs from the
-																				// database
+		List<ProcedureLookUp> existingProcedures = getAllExistingPrecedures(); 
 
 		for (Record uploadedRecord : uploadedRecords) {
 			Procedure bestMatch = findBestMatchingProcedure(uploadedRecord, existingProcedures);
 
 			if (bestMatch != null) {
+
 				matchedProcedures.add(bestMatch);
 			}
 		}
 
 		// Save the matched drugs to the database or perform other necessary actions
 		saveMatches(matchedProcedures);
-
+		
+		//Make a post
 		return matchedProcedures;
 	}
 
@@ -143,7 +143,6 @@ public class ProcedureServiceImpl implements ProcedureService {
 					uploadedRecord.getString("DRUG NAME").length(),
 					existingProcedure.getDescription().length());
 
-			// if (editDistance <= threshold) {
 			if (editDistance < bestEditDistance) {
 				bestEditDistance = editDistance;
 				bestMatch = Procedure.builder()
@@ -157,10 +156,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 						.status(bestEditDistance == 0 ? Status.ACCEPTED : Status.UNACCEPTED)
 						.build();
 
-				// Add the matched code to the set
-				// matchedCodes.add(existingProcedure.getCode());
 			}
-			// }
 		}
 
 		return bestMatch;
@@ -170,6 +166,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 	public List<Procedure> saveMatches(List<Procedure> procedure) {
 		return procedureRepository.saveAll(procedure);
 	}
+
 
 	// This method is the edit distance dynamic programming solution
 	static int eD2(String s1, String s2, int m, int n) {
@@ -196,6 +193,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 
 	@Override
 	public List<ProcedureLookUp> uploadLookUpData(MultipartFile file) throws IOException {
+		
 		List<ProcedureLookUp> procedureList = new ArrayList<>();
 		try (InputStream inputStream = file.getInputStream()) {
 			List<Record> parsedRecords = parseCsvRecords(inputStream);
@@ -207,16 +205,16 @@ public class ProcedureServiceImpl implements ProcedureService {
 				// Check if an entry with the same code already exists
 				ProcedureLookUp existingProcedure = procedureLookUpRepository.findByCode(code);
 				if (existingProcedure != null) {
-					// Update the description for the existing entry
 					existingProcedure.setDescription(description);
 					procedureList.add(existingProcedure);
 				} else {
-					// Create a new entry
+					//Create a new entry
 					ProcedureLookUp newProcedure = ProcedureLookUp.builder()
 							.code(code)
 							.description(description)
 							.build();
 					procedureList.add(newProcedure);
+					
 				}
 			}
 			procedureLookUpRepository.saveAll(procedureList);
@@ -226,7 +224,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 					"Error reading the look up Schedule. Check the that file format is correct and upload again", e);
 		}
 	}
-
+	
 	@Override
 	public Procedure findById(Long id) throws CustomNotFoundException {
 		Procedure procedure = procedureRepository.findById(id)
@@ -236,10 +234,21 @@ public class ProcedureServiceImpl implements ProcedureService {
 	}
 
 	@Override
-	public Procedure updateStatus(Procedure existingProcedure, Status status) {
-		existingProcedure.setStatus(status);
-		return procedureRepository.save(existingProcedure);
+	public List<Procedure> getAllById(List<Long> ids) throws CustomNotFoundException {
+		List<Procedure> procedures = procedureRepository.findAllById(ids);
+		
+		// Check if all requested IDs were found
+		for (Long id : ids) {
+			boolean found = procedures.stream().anyMatch(procedure -> procedure.getId().equals(id));
+			if (!found) {
+				throw new CustomNotFoundException("Procedure not found with id: " + id);
+			}
+		}
+
+		return procedures;
 	}
+
+
 
 	@Override
 	public void downloadRecordsByStatus(String status) {
@@ -317,14 +326,30 @@ public class ProcedureServiceImpl implements ProcedureService {
 	}
 
 	@Override
-	public List<Procedure> updateStatusInBatches(List<Procedure> proceduresToUpdate) {
-		
-		if (!proceduresToUpdate.isEmpty()) {
-			return procedureRepository.saveAll(proceduresToUpdate);
+	public Procedure updateStatus(Procedure existingProcedure, Status status) {
+		if(status != null){
+			existingProcedure.setStatus(status);
 		}
-
-		return Collections.emptyList();
+		return procedureRepository.save(existingProcedure);
 	}
+
+	@Override
+	public List<Procedure> updateStatusInBatches(List<Procedure> proceduresToUpdate, Status status) {
+    if (!proceduresToUpdate.isEmpty() && status != null) {
+        // Use the map operation to update the status of each record, but only if status is not null
+        proceduresToUpdate.forEach(record -> {
+            if (status != null) {
+                record.setStatus(status);
+            }
+        });
+
+        // Save all updated records and return the list
+        return procedureRepository.saveAll(proceduresToUpdate);
+    }
+    	return Collections.emptyList();
+	}
+
+
 
 	@Override
 	public List<Procedure> getRecordsByIds(List<Long> recordIds) {
@@ -374,4 +399,17 @@ public class ProcedureServiceImpl implements ProcedureService {
 		}
 		
     }
+
+	@Override
+	public void markProcedureAsRejected(List<Procedure> procedures) {
+		for (Procedure procedure : procedures) {
+			// Find all procedures with the same lookup code and status ACCEPTED
+			List<Procedure> acceptedRecords = procedureRepository.findByLookUpCodeAndStatus(procedure, Status.ACCEPTED);
+			
+			// Mark all found records as REJECTED
+			acceptedRecords.forEach(record -> {
+				record.setStatus(Status.REJECTED);
+			});
+		}
+	}
 }

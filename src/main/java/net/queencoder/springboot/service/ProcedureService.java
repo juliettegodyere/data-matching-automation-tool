@@ -18,10 +18,12 @@ public interface ProcedureService {
 	public List<ProcedureLookUp> uploadLookUpData(MultipartFile file) throws Exception;
 	public Page<Procedure> findPaginated(int pageNo, int pageSize, String sortField, String sortDirection, String query, List<Status> statuses);
 	public Procedure findById(Long id) throws CustomNotFoundException;
+	public List<Procedure> getAllById(List<Long> id) throws CustomNotFoundException;
 	public Procedure updateStatus(Procedure existingProcedure, Status status);
     public void downloadRecordsByStatus(String status);
 	public List<Procedure> findByLookUpCode(Procedure existingLookUpCode);
-	public List<Procedure> updateStatusInBatches(List<Procedure> lookupCodeResult);
+	public List<Procedure> updateStatusInBatches(List<Procedure> lookupCodeResult, Status status);
     public List<Procedure> getRecordsByIds(List<Long> recordIds);
     public void createDownloadableResource(List<Procedure> records);
+	public void markProcedureAsRejected(List<Procedure> procedures);
 }

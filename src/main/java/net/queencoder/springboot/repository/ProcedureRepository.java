@@ -14,6 +14,8 @@ import net.queencoder.springboot.model.Status;
 public interface ProcedureRepository extends JpaRepository<Procedure, Long>{
 	List<Procedure> findByName(String name);
     List<Procedure> findByLookUpCode(String lookUpCode);
+    List<Procedure> findByLookUpCodeAndStatus(Procedure procedure, Status status);
+
 	Page<Procedure> findByStatusIn(List<Status> statuses, Pageable pageable);
 
     @Query("SELECT p FROM Procedure p WHERE " +
