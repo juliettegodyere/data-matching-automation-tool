@@ -16,6 +16,9 @@
 	<nav class="navbar navbar-light" style="background-color: #e3f2fd;">
 		<div class="container">
 			<a class="navbar-brand">Logo</a>
+			<a href="/delete">
+				Delete
+			</a>
 			<form th:action="@{/page/{pageNo}(pageNo=1)}" method="get" class="d-flex" role="search">
 				<input class="form-control me-2" type="text" name="query" placeholder="Search..." th:value="${query}"
 					aria-label="Search">

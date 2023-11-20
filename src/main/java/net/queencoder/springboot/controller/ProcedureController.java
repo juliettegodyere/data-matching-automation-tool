@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -243,9 +245,11 @@ public class ProcedureController {
             throws Exception {
         return new ResponseEntity<>(procedureService.uploadLookUpData(file), HttpStatus.OK);
     }
-    @DeleteMapping("/api/v1/delete")
-    public ResponseEntity<String> clearDB(){
+    // @DeleteMapping("/delete")
+    @RequestMapping(value = "/delete", method = {RequestMethod.GET, RequestMethod.DELETE})
+    public String clearDB(HttpServletRequest request){
+        String referer = request.getHeader("Referer");
         procedureService.clearDB();
-        return new ResponseEntity<>("DB cleared successfully", HttpStatus.OK);
+       return "redirect:" + referer;
     }
 }
