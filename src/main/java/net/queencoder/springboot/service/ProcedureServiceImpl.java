@@ -412,4 +412,9 @@ public class ProcedureServiceImpl implements ProcedureService {
 			});
 		}
 	}
+
+	@Override
+	public void clearDB(){
+		procedureLookUpRepository.deleteAll();
+	}
 }

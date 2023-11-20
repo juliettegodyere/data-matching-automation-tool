@@ -26,4 +26,5 @@ public interface ProcedureService {
     public List<Procedure> getRecordsByIds(List<Long> recordIds);
     public void createDownloadableResource(List<Procedure> records);
 	public void markProcedureAsRejected(List<Procedure> procedures);
+    public void clearDB();
 }
