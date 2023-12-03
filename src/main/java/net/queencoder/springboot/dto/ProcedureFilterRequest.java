@@ -11,7 +11,7 @@ public class ProcedureFilterRequest {
     private String lookUpName;
     private String lookUpCode;
     private Integer editDistance;
-    private Long claimId;
+    private Long claimId = 1L;
     private String statuses = "ACCEPTED,UNACCEPTED";
     private String pageSize = "50";
     private String sortField = "editDistance";

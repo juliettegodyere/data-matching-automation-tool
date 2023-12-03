@@ -30,7 +30,7 @@ public class Claim extends AuditModel{
     private String hospitalName;
     private String narration;
 
-    @OneToMany(mappedBy = "claim", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "claim", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Procedure> procedures;
 
     // @Transient

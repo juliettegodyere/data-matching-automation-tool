@@ -12,10 +12,15 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import net.queencoder.springboot.dto.ClaimFilterRequest;
+import net.queencoder.springboot.dto.ProcedureFilterRequest;
+import net.queencoder.springboot.exception.CustomNotFoundException;
 import net.queencoder.springboot.model.Claim;
+import net.queencoder.springboot.model.Procedure;
 import net.queencoder.springboot.model.Status;
 import net.queencoder.springboot.service.ClaimService;
 
@@ -61,15 +66,37 @@ public class ClaimController {
 
         model.addAttribute("previousPage", previousPage);
         model.addAttribute("nextPage", nextPage);
+        model.addAttribute("filterRequest", filterRequest);
 
         return "index";
     }
 
     @GetMapping("/")
-    public String viewHomePage(@PathVariable(value = "pageNo", required = false) Optional<Integer> pageNoOptional, @ModelAttribute ClaimFilterRequest filterRequest,
+    public String viewHomePage(@PathVariable(value = "pageNo", required = false) Optional<Integer> pageNoOptional,  @ModelAttribute("filterRequest")  ClaimFilterRequest filterRequest,
     Model model) {
 
         return findPaginated(pageNoOptional,filterRequest, model);
+    }
+
+     @GetMapping("/page/{currentPage}/delete")
+    public String bulkDelete(
+            @ModelAttribute ClaimFilterRequest filterRequest,
+            RedirectAttributes redirectAttributes,
+            @PathVariable(value = "currentPage") int currentPage,
+            HttpServletRequest request,
+            Model model) throws CustomNotFoundException {
+        List<Claim> deletedClaim = claimService.deleteSelectedRecords(filterRequest);
+        String referer = request.getHeader("Referer");
+    
+        // Add flash attributes for success and deleted records
+        if (!deletedClaim.isEmpty()) {
+            redirectAttributes.addFlashAttribute("successMessage", "Records successfully deleted.");
+            redirectAttributes.addFlashAttribute("deletedClaims", deletedClaim);
+    
+            return "redirect:/page/" + currentPage;
+        } else {
+            return "redirect:" + referer;
+        }
     }
     
 }

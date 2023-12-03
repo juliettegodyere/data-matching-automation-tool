@@ -25,5 +25,7 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     Page<Claim> findAll(Specification<Claim> spec, Pageable pageable);
 
     // List<Procedure> findProceduresByClaim(Procedure procedure);
+    List<Claim> findAll(Specification<Claim> spec);
+
     
 }

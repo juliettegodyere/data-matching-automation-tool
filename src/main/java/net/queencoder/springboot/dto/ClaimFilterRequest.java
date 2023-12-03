@@ -9,7 +9,7 @@ import lombok.*;
 public class ClaimFilterRequest {
     private String hospitalName;
     private String narration;
-    // private Long claimId = 0L;
+    private Long id;
     private String pageSize = "50";
     private String sortField = "createdDate";
     private String sortDir = "asc";

@@ -62,7 +62,15 @@
 								<button class="btn btn-primary dropdown-toggle bulk__action-button" type="button" data-toggle="dropdown" >Bulk Actions
 								<span class="caret"></span></button>
 								<ul class="dropdown-menu">
-								  <li><a href="#">Delete</a></li>
+								  <!-- <li><a href="#">Delete</a></li> -->
+								  <li>
+									<form th:action="@{/page/{currentPage}/delete(currentPage=${currentPage})}" method="get" id="bulkDeleteForm">
+										<input type="hidden" name="hospitalName" th:value="${filterRequest.hospitalName}" />
+										<input type="hidden" name="narration" th:value="${filterRequest.narration}" />
+										<input type="hidden" name="claimId" th:value="${filterRequest.id}" />
+										<button type="submit" onclick="submitForm()" class="delete-item" style="margin-left: 2rem; background: none;">Delete</button>
+									</form>
+								  </li>
 								</ul>
 							  </div>
 							  <div class="dropdown" style="margin-left: 1rem;">
@@ -98,7 +106,7 @@
 											<span aria-hidden="true">&times;</span>
 										</button>
 									</div>
-									<!-- <div class="modal-body">
+									<div class="modal-body">
 										<div class="form-group">
 											<label for="procedureName">Hospital Name:</label>
 											<input type="text" class="form-control" id="hospitalName" name="hospitalName" th:field="*{hospitalName}">
@@ -107,16 +115,20 @@
 											<label for="cbaName">Narration:</label>
 											<input type="text" class="form-control" id="narration" name="narration" th:field="*{narration}">
 										</div>
+										<div class="form-group">
+											<label for="cbaName">ID:</label>
+											<input type="text" class="form-control" id="id" name="id" th:field="*{id}">
+										</div>
 										
 										<input type="hidden" name="sortField" th:value="${filterRequest.sortField}" />
 										<input type="hidden" name="sortDir" th:value="${filterRequest.sortDir}" />
 										<input type="hidden" name="pageSize" th:value="${filterRequest.pageSize}" /> 
 										<input type="hidden" name="statuses" th:value="${filterRequest.statuses}" /> 
-									</div> -->
+									</div>
 									
 									<div class="modal-footer">
 										<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-										<button type="button" class="btn btn-primary" style="background-color: #008080;">Filter</button>
+										<button type="submit" class="btn btn-primary" style="background-color: #008080;">Filter</button>
 									</div>
 								</div>
 							</div>
@@ -243,5 +255,3 @@
 </body>
 
 </html>
-
-http://localhost:8080/procedures/page/1?claimId=1&pageSize=50&sortField=createdDate&sortDir=asc&statuses=ACCEPTED,UNACCEPTED

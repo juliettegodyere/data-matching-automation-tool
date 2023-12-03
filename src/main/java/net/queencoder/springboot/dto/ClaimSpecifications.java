@@ -17,9 +17,9 @@ public class ClaimSpecifications {
                 predicates.add(builder.like(builder.lower(root.get("hospitalName")), "%" + filterRequest.getHospitalName().toLowerCase() + "%"));
             }
 
-            // if (filterRequest.getClaimId() != null) {
-            //     predicates.add(builder.equal(root.get("id"), filterRequest.getClaimId()));
-            // }
+            if (filterRequest.getId() != null) {
+                predicates.add(builder.equal(root.get("id"), filterRequest.getId()));
+            }
 
             if (filterRequest.getNarration() != null) {
                 predicates.add(builder.like(builder.lower(root.get("narration")), "%" + filterRequest.getNarration().toLowerCase() + "%"));
