@@ -4,178 +4,113 @@
 <head>
 	<meta charset="ISO-8859-1">
 	<title>Fuzzy String Matching</title>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-		integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-        <link rel="stylesheet" th:href="@{/css/index.css}">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" th:href="@{/css/index.css}">
+	<!--GOOGLE FONTS (Montserrat)-->
+	<link
+		href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap"
+		rel="stylesheet">
+	<link rel="stylesheet" th:href="@{/css/index.css}">
 	<script src="https://kit.fontawesome.com/1385283e69.js" crossorigin="anonymous"></script>
-    <script>
-		// Function to open the modal
-		function openModal() {
-			console.log("Modal opening");
-			var modal = document.getElementById("myModal");
-			modal.style.display = "block";
-		}
-
-		// Function to close the modal
-		function closeModal() {
-			console.log("Modal closing")
-			var modal = document.getElementById("myModal");
-			modal.style.display = "none";
-		}
-		// Call the openModal function when the page loads
-        // document.addEventListener("DOMContentLoaded", function() {
-        //     openModal();
-        // });
-	</script>
 </head>
 
-
 <body>
-    <div th:if="${procedures.size() <= 1}">
-		<div  class="alert alert-danger">
-			<a href="/page/1?sortField=editDistance&sortDir=asc&query=&statuses=UNACCEPTED"><span class="close" onclick="closeModal()">&times;</span></a>
-			<h2>No matches found for this record.</h2>
-		</div>
-	</div>
-	
-	<div th:if="${procedures.size() > 1}" th:remove="tag">
-		<script>
-			// Automatically open the modal when the page loads
-			window.onload = function() {
-				openModal();
-			};
-		</script>
-	</div>
-    <!-- Modal -->
-    <div id="myModal" class="modal container">
-        <div class="modal-content">
-            <div>
-                <a href="/page/1?sortField=editDistance&sortDir=asc&query=&statuses=UNACCEPTED"><span class="close" onclick="closeModal()">&times;</span></a>
-                <h2>If you rematch one record, other will be rejected.</h2>
-            </div>
-            <br/>
-            <div class="subHeader">
-				<div  id="buttonContainer" class="dynamicIcons">
-					<div class="acceptIcon">
-						<form th:action="@{/bulkAccept}" method="get">
-							<input type="hidden"  id="acceptSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
-							<button id="acceptButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-check-circle fa-2x acceptIconStyle"></i> 
-							</button>
-						</form>
-					</div>
-					<div class="rejectIcon">
-						<form th:action="@{/bulkReject}" method="get">
-							<input type="hidden"  id="rejectSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
-							<button id="rejectButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-times-circle fa-2x rejectIconStyle"></i>
-							</button>
-						</form>
-					</div>
-					<div class="downloadIcon">
-						<form th:action="@{/bulkDownload}" method="get">
-							<input type="hidden" id="downloadSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}"/>
-							<button id="downloadButton" type="submit" class="btn btn-link p-0">
-								<i class="fas fa-download fa-2x downloadIconStyle"></i>
-							</button>
-						</form>
-					</div>
-				</div>
-				<div class="actionButtons">
-					<div class="newButton">
-						<a th:href="@{/upload-schedule}" class="buttonSize">
-							<button class="custom-button">New</button>
-						</a>
-					</div>
-					<div class="filterButton">
-						<a class="custom-btn dropdown-toggle" data-toggle="dropdown" aria-expanded="false" style="color: #fff;">
-							Filter 
-						</a>
-						<ul class="dropdown-menu">
-							<li th:each="status : ${staticStatus}">
-								<a class="custom-dropdown-item"
-								   th:href="@{/page/{pageNo}(pageNo=1, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${status})}"
-								   th:text="${status}">Link Text</a>
-							</li>
-						</ul>
-					</div>					
+	<div id="myModal" class="modal container" style="padding: 2rem;">
+		<div class="modal-content" style="padding: 2rem;">
+			<div style="display: flex; justify-content: space-between; align-items: center;">
+				<h3 style="color: #008080;">Matches</h3>
+				<div style="background-color: #008080;  border-radius: 50%;">
+					<a href="#" onclick="closeModal(); return false;">
+						<span class="close"
+							style="font-size: 3rem; color: white; box-shadow: none; padding: 0.5rem;">&times;</span>
+					</a>
 				</div>
 			</div>
-            <table  border="0" class="table table-responsive-md">
-                <thead>
-                    <tr>
-                        <th>
-                            <input type="checkbox" id="selectAllCheckbox" />
-                        </th>
-						<th scope="col">
-							<a
-								th:href="@{'/page/' + ${currentPage} + '?sortField=status&sortDir=' + ${reverseSortDir}}">
-								Status</a>
-						</th>
-                        <th scope="col">
-                            <a th:href="@{/page/1?sortField=name&sortDir=asc&query=&statuses=ACCEPTED,UNACCEPTED,REJECTED}">
-                                Procedure Name</a>
-                        </th>
-                        <th scope="col">
-                            <a
-                            th:href="@{page/1?sortField=lookUpName&sortDir=asc&query=&statuses=ACCEPTED,UNACCEPTED,REJECTED}">
-                                Look Up Name</a>
-                        </th>
-                        <th scope="col">Look Up Code</th>
-                        <th scope="col">
-                            <a
-                            th:href="@{page/1?sortField=editDistance&sortDir=asc&query=&statuses=ACCEPTED,UNACCEPTED,REJECTED}">
-                                Match Degree</a>
-                        </th>
-                        <th scope="col">Quantity</th>
-                        <th scope="col">Rate</th>
-                        <th scope="col" style="width: 100px;">  </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="procedure, i : ${procedures}" class="accept-icon reject-icon">
-                        <td>
-                            <input type="checkbox" class="recordCheckbox" th:id="${'checkbox_' + procedure.id}"
-                                name="selectedItems" th:value="${procedure.id}" />
-                        </td>
-						<td>
-							<a th:text="${procedure.status}"
-								th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
-							</a>
+			<div style="margin-top: 1rem;">
+				<p>All procedures that matches to <span th:text="${code}" style="font-weight: 700;"></span> code. If you
+					accept one, others will be rejected.</p>
+			</div>
+			<div class="table-responsive table-main main__bottom">
 
-						</td>
-                        <td th:text="${procedure.name}"></td>
-                        <td th:text="${procedure.lookUpName}"></td>
-                        <td th:text="${procedure.lookUpCode}"></td>
-                        <td>
-                            <span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
+				<table class="table">
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Status</th>
+							<th>Procedure Name</th>
+							<th>Look Up Name</th>
+							<th>Look Up Code</th>
+							<th>Match Degree</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="procedure, i : ${procedures}" class="accept-icon reject-icon">
+							<td th:text="${i.index + 1}"></td>
+							<td>
+								<a th:text="${procedure.status}"
+									th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
+								</a>
 
-                        </td>
-                        <td th:text="${procedure.quantity}"></td>
-                        <td th:text="${procedure.rate}"></td>
-                        <td>
-                            <div class="row justify-content-around">
-								<span class="accept-icon action-icon-accept col-6">
-									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}" class="action-icon-accept">
-									<i class="fas fa-check-circle"></i>
-								</a></span>
-								<span class="reject-icon action-icon-reject col-6">
-									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}" class="action-icon-reject">
-										<i class="fas fa-times-circle"></i>
-									</a>
-								</span>
-							</div>
+							</td>
+							<td th:text="${procedure.name}"></td>
+							<td th:text="${procedure.lookUpName}"></td>
+							<td th:text="${procedure.lookUpCode}"></td>
+							<!-- <td th:text="${procedure.editDistance}"></td> -->
+							<td>
+								<span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
 
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-	<script src="/js/checkbox_bulk_selection.js"></script>
+							</td>
+							<td>
+								<div
+									style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center;">
+									<div class="accept-icon action-icon-accept">
+										<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
+											class="action-icon-accept">
+											<span class="glyphicon glyphicon-ok"
+												style="color:green; font-size: 2rem;"></span>
+										</a>
+									</div>
+									<div style="margin-left: 1.5rem;" class="reject-icon action-icon-reject">
+										<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
+											class="action-icon-reject">
+											<span class="glyphicon glyphicon-remove"
+												style="color:crimson; font-size: 2rem;"></span>
+										</a>
+									</div>
+								</div>
+							</td>
+						</tr>
+
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<script>
+			// Automatically open the modal when the page loads
+			window.onload = function () {
+				openModal();
+			};
+			function openModal() {
+				console.log("Modal opening");
+				var modal = document.getElementById("myModal");
+				modal.style.display = "block";
+			}
+
+			// Function to close the modal
+			function closeModal() {
+				console.log("Modal closing")
+				var modal = document.getElementById("myModal");
+				modal.style.display = "none";
+				window.history.back();
+			}
+		</script>
+		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+		<script src="/js/checkbox_bulk_selection.js"></script>
 
 </body>
 

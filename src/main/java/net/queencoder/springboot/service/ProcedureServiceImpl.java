@@ -8,6 +8,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -16,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,13 +29,24 @@ import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
 import lombok.extern.slf4j.Slf4j;
-
+import net.queencoder.springboot.dto.CbaApiResponse;
+import net.queencoder.springboot.dto.ProcedureFilterRequest;
+import net.queencoder.springboot.dto.ProcedureSpecifications;
+import net.queencoder.springboot.exception.ClaimExistsException;
+import net.queencoder.springboot.exception.CustomBadRequestException;
 import net.queencoder.springboot.exception.CustomNotFoundException;
+import net.queencoder.springboot.model.Claim;
 import net.queencoder.springboot.model.Procedure;
 import net.queencoder.springboot.model.ProcedureLookUp;
 import net.queencoder.springboot.model.Status;
+import net.queencoder.springboot.repository.ClaimRepository;
 import net.queencoder.springboot.repository.ProcedureLookUpRepository;
 import net.queencoder.springboot.repository.ProcedureRepository;
+
+import reactor.core.publisher.Mono;
+
+import org.springframework.web.reactive.function.client.WebClient;
+
 
 @Service
 @Slf4j
@@ -44,7 +59,14 @@ public class ProcedureServiceImpl implements ProcedureService {
 	private ProcedureLookUpRepository procedureLookUpRepository;
 
 	@Autowired
+	private ClaimRepository claimRepository;
+
+	@Autowired
 	private Environment environment;
+
+	@Autowired
+	private WebClient.Builder webClientBuilder;
+
 
 	@Override
 	public List<ProcedureLookUp> getAllExistingPrecedures() {
@@ -54,44 +76,113 @@ public class ProcedureServiceImpl implements ProcedureService {
 	@Override
 	public List<Procedure> getAllMatches() {
 		return procedureRepository.findAll();
+		
 	}
 
-	public Page<Procedure> getProceduresByStatuses(List<Status> statuses, Pageable pageable) {
-		return procedureRepository.findByStatusIn(statuses, pageable);
+	private String getBase64Credentials(String username, String password) {
+		String credentials = username + ":" + password;
+		return Base64.getEncoder().encodeToString(credentials.getBytes());
 	}
+
+	public List<ProcedureLookUp> fetchCbaDataFromFormelo() {
+		String username = System.getenv("FORMELO_USERNAME");
+		String password = System.getenv("FORMELO_PASSWORD");
+		String baseUrl = System.getenv("FORMELO_URL");
+		CbaApiResponse[] result = webClientBuilder.baseUrl(baseUrl)
+			.defaultHeader(HttpHeaders.AUTHORIZATION, "Basic " + getBase64Credentials(username, password))
+			.build()
+			.get()
+			.uri("/api/documents/?collection.slug=cba_lookup")
+			.retrieve()
+			.onStatus(
+                    HttpStatus.BAD_REQUEST::equals,
+                    response -> response.bodyToMono(String.class)
+                            .flatMap(errorBody -> Mono.error(new CustomBadRequestException("Bad request: " + errorBody))))
+			.bodyToMono(CbaApiResponse[].class)
+			.block();
+	
+			if (result != null) {
+				return Arrays.stream(result)
+						.map(response -> {
+							ProcedureLookUp procedureLookUp = new ProcedureLookUp();
+							String numericPart = response.getId().replaceAll("\\D", "");
+                
+                			procedureLookUp.setId(Long.valueOf(numericPart));
+							// procedureLookUp.setId(Long.valueOf(response.getId()));
+							procedureLookUp.setCode(response.getData().getCode());
+							procedureLookUp.setDescription(response.getData().getDescription());
+							return procedureLookUp;
+						})
+						.collect(Collectors.toList());
+			} else {
+				return Collections.emptyList();
+			}
+	}	
 
 	@Override
-	public Page<Procedure> findPaginated(int pageNo, int pageSize, String sortField, String sortDirection, String query,
-			List<Status> statuses) {
-		Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortField).ascending()
-				: Sort.by(sortField).descending();
+	public Page<Procedure> findPaginated(int pageNo, int pageSize, String sortField, String sortDir,ProcedureFilterRequest filterRequest) {
 
-		Pageable pageable = PageRequest.of(pageNo - 1, pageSize, sort);
+		Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortField).ascending()
+				: Sort.by(sortField).descending();		
 
-		Page<Procedure> proceduresPage = getProceduresByStatuses(statuses, pageable);
-
-		if (query != null && query != "") {
-
-			proceduresPage = procedureRepository.search(query, pageable);
-		}
-
-		return proceduresPage;
+		Pageable pageable = PageRequest.of(pageNo - 1, Integer.parseInt(filterRequest.getPageSize()), sort);
+        return procedureRepository.findAll(ProcedureSpecifications.filterByProcedureRequest(filterRequest), pageable);
 	}
 
 	@Override
 	public List<Procedure> uploadData(MultipartFile file) throws IOException {
-		// Delete all existing entries from the database
-		procedureRepository.deleteAll();
-
+		//procedureRepository.deleteAll();
 		try (InputStream inputStream = file.getInputStream()) {
+
+			String filename = file.getOriginalFilename();
+
+			if (!isValidFilenameFormat(filename)) {
+				throw new IllegalArgumentException("Invalid filename format. Please use the format: hospital-name_month-year_procedure.csv");
+			}
+	
+			String[] parts = extractHospitalName(filename);
+			String hospitalName = parts[0];
+			String narration = parts[1];
+
 			List<Record> parsedRecords = parseCsvRecords(inputStream);
 
-			List<Procedure> matchedProcedures = matchAndSaveRecords(parsedRecords);
+			List<Procedure> matchedProcedures = matchAndSaveRecords(parsedRecords, hospitalName, narration);
 			return matchedProcedures;
 		} catch (IOException e) {
 			throw new IOException("Error reading the Schedule. Check the that file format is correct and upload again",
 					e);
 		}
+	}
+
+	public boolean isValidFilenameFormat(String filename) {
+		filename = filename.trim();
+	
+		// Define a regular expression for the expected filename format
+		String regex = "^[a-zA-Z0-9-]+_[a-zA-Z0-9-]+_[a-zA-Z0-9-]+\\.csv$";
+	
+		// Use Pattern and Matcher classes to validate the filename
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(filename);
+	
+		if (matcher.matches()) {
+			System.out.println("The input matches the pattern!");
+		} else {
+			System.out.println("The input does not match the pattern.");
+		}
+	
+		return matcher.matches();
+	}
+	
+
+	private String[] extractHospitalName(String filePath) {
+		// Assuming the hospital name is the first part of the file path
+		String[] pathParts = filePath.split("_");
+		String [] file_extracts = new String[pathParts.length];
+		if (pathParts.length > 0) {
+			file_extracts[0] = pathParts[0].trim();
+			file_extracts[1] = pathParts[1].trim();
+		}
+		return file_extracts; 
 	}
 
 	private List<Record> parseCsvRecords(InputStream inputStream) {
@@ -101,32 +192,53 @@ public class ProcedureServiceImpl implements ProcedureService {
 		return parser.parseAllRecords(inputStream);
 	}
 
-	private List<Procedure> matchAndSaveRecords(List<Record> uploadedRecords) {
+	private List<Procedure> matchAndSaveRecords(List<Record> uploadedRecords, String hospitalName, String narration) {
 		List<Procedure> matchedProcedures = new ArrayList<>();
 
-		List<ProcedureLookUp> existingProcedures = getAllExistingPrecedures(); 
+		Optional<Claim> existingClaim = claimRepository.findByHospitalNameAndNarration(
+                hospitalName,
+                narration
+        );
+
+		if (existingClaim.isPresent()) {
+			 // If a matching Claim already exists, throw an exception with an error message
+			 throw new ClaimExistsException("Hospital with the same name and narration already exists.");
+		}
+
+		Claim claim = Claim.builder()
+		.hospitalName(hospitalName)
+		.narration(narration)
+		.build();
+
+		claimRepository.save(claim);
+
+		List<ProcedureLookUp> existingProcedures = getAllExistingPrecedures();
+		// List<ProcedureLookUp> existingProcedures = fetchCbaDataFromFormelo();
 
 		for (Record uploadedRecord : uploadedRecords) {
-			Procedure bestMatch = findBestMatchingProcedure(uploadedRecord, existingProcedures);
+			Procedure bestMatch = findBestMatchingProcedure(uploadedRecord, existingProcedures, claim);
 
 			if (bestMatch != null) {
 
 				matchedProcedures.add(bestMatch);
 			}
 		}
-
-		// Save the matched drugs to the database or perform other necessary actions
-		saveMatches(matchedProcedures);
 		
-		//Make a post
+
+		saveMatches(matchedProcedures);
+
 		return matchedProcedures;
 	}
 
-	private Procedure findBestMatchingProcedure(Record uploadedRecord, List<ProcedureLookUp> existingProcedures) {
+	private Procedure findBestMatchingProcedure(Record uploadedRecord, List<ProcedureLookUp> existingProcedures, Claim claim) {
 		int threshold = 3; // Adjust this value according to your preference
 
 		int bestEditDistance = Integer.MAX_VALUE;
 		Procedure bestMatch = null;
+		Optional<Claim> existingClaim = claimRepository.findByHospitalNameAndNarration(
+                claim.getHospitalName(),
+                claim.getNarration()
+        );
 
 		// Create a set to store matched lookup codes
 		// Set<String> matchedCodes = new HashSet<>();
@@ -154,6 +266,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 						.rate(uploadedRecord.getString("RATE"))
 						.editDistance(bestEditDistance)
 						.status(bestEditDistance == 0 ? Status.ACCEPTED : Status.UNACCEPTED)
+						.claim(existingClaim.get())
 						.build();
 
 			}
@@ -166,7 +279,6 @@ public class ProcedureServiceImpl implements ProcedureService {
 	public List<Procedure> saveMatches(List<Procedure> procedure) {
 		return procedureRepository.saveAll(procedure);
 	}
-
 
 	// This method is the edit distance dynamic programming solution
 	static int eD2(String s1, String s2, int m, int n) {
@@ -193,7 +305,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 
 	@Override
 	public List<ProcedureLookUp> uploadLookUpData(MultipartFile file) throws IOException {
-		
+
 		List<ProcedureLookUp> procedureList = new ArrayList<>();
 		try (InputStream inputStream = file.getInputStream()) {
 			List<Record> parsedRecords = parseCsvRecords(inputStream);
@@ -208,13 +320,13 @@ public class ProcedureServiceImpl implements ProcedureService {
 					existingProcedure.setDescription(description);
 					procedureList.add(existingProcedure);
 				} else {
-					//Create a new entry
+					// Create a new entry
 					ProcedureLookUp newProcedure = ProcedureLookUp.builder()
 							.code(code)
 							.description(description)
 							.build();
 					procedureList.add(newProcedure);
-					
+
 				}
 			}
 			procedureLookUpRepository.saveAll(procedureList);
@@ -224,7 +336,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 					"Error reading the look up Schedule. Check the that file format is correct and upload again", e);
 		}
 	}
-	
+
 	@Override
 	public Procedure findById(Long id) throws CustomNotFoundException {
 		Procedure procedure = procedureRepository.findById(id)
@@ -236,10 +348,11 @@ public class ProcedureServiceImpl implements ProcedureService {
 	@Override
 	public List<Procedure> getAllById(List<Long> ids) throws CustomNotFoundException {
 		List<Procedure> procedures = procedureRepository.findAllById(ids);
-		
+		log.info("The processed ID {}", procedures);
 		// Check if all requested IDs were found
 		for (Long id : ids) {
 			boolean found = procedures.stream().anyMatch(procedure -> procedure.getId().equals(id));
+			log.info("The found ID {}", found);
 			if (!found) {
 				throw new CustomNotFoundException("Procedure not found with id: " + id);
 			}
@@ -247,8 +360,6 @@ public class ProcedureServiceImpl implements ProcedureService {
 
 		return procedures;
 	}
-
-
 
 	@Override
 	public void downloadRecordsByStatus(String status) {
@@ -260,7 +371,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 		String downloadFolderPath = environment.getProperty("download.folder.path");
 
 		// Define the file name
-		String fileName = status.toLowerCase().trim()+"Records.csv";
+		String fileName = status.toLowerCase().trim() + "Records.csv";
 
 		try {
 			// Create the download folder if it doesn't exist
@@ -283,13 +394,14 @@ public class ProcedureServiceImpl implements ProcedureService {
 			headers.setContentDispositionFormData("attachment", fileName);
 
 			// return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
-			//log.info("Bytes: {}; headers {}, HttpStatus {}", bytes, headers, HttpStatus.OK);
+			// log.info("Bytes: {}; headers {}, HttpStatus {}", bytes, headers,
+			// HttpStatus.OK);
 		} catch (IOException e) {
 			// Handle the exception
 			e.printStackTrace();
 			// Return an error response here
 			// return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-			//log.info(" HttpStatus {}", HttpStatus.INTERNAL_SERVER_ERROR);
+			// log.info(" HttpStatus {}", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -298,25 +410,20 @@ public class ProcedureServiceImpl implements ProcedureService {
 		// You can use libraries like OpenCSV to help with CSV generation
 		// Example: using OpenCSV - https://www.baeldung.com/java-csv
 		// StringJoiner and StringBuilder can also be used for simple CSV generation
-
 		// Sample CSV generation using StringJoiner
 		StringJoiner joiner = new StringJoiner("\n");
-		joiner.add("ID,Procedure Class,Name,Look Up Name,Look Up Code,Quantity,Rate,Edit Distance,Status");
+		joiner.add("ID,Name,Look Up Name,Look Up Code,Edit Distance,Status");
 
 		for (Procedure procedure : procedures) {
-			String row = String.format("%d,%s,%s,%s,%s,%s,%s,%d,%s",
+			String row = String.format("%d,%s,%s,%s,%d,%s",
 					procedure.getId(),
-					procedure.getProcedureClass(),
 					procedure.getName(),
 					procedure.getLookUpName(),
 					procedure.getLookUpCode(),
-					procedure.getQuantity(),
-					procedure.getRate(),
 					procedure.getEditDistance(),
 					procedure.getStatus());
 			joiner.add(row);
 		}
-
 		return joiner.toString();
 	}
 
@@ -327,7 +434,7 @@ public class ProcedureServiceImpl implements ProcedureService {
 
 	@Override
 	public Procedure updateStatus(Procedure existingProcedure, Status status) {
-		if(status != null){
+		if (status != null) {
 			existingProcedure.setStatus(status);
 		}
 		return procedureRepository.save(existingProcedure);
@@ -335,38 +442,56 @@ public class ProcedureServiceImpl implements ProcedureService {
 
 	@Override
 	public List<Procedure> updateStatusInBatches(List<Procedure> proceduresToUpdate, Status status) {
-    if (!proceduresToUpdate.isEmpty() && status != null) {
-        // Use the map operation to update the status of each record, but only if status is not null
-        proceduresToUpdate.forEach(record -> {
-            if (status != null) {
-                record.setStatus(status);
-            }
-        });
+		if (!proceduresToUpdate.isEmpty() && status != null) {
+			// Use the map operation to update the status of each record, but only if status
+			// is not null
+			proceduresToUpdate.forEach(record -> {
+				if (status != null) {
+					record.setStatus(status);
+				}
+			});
 
-        // Save all updated records and return the list
-        return procedureRepository.saveAll(proceduresToUpdate);
-    }
-    	return Collections.emptyList();
+			// Save all updated records and return the list
+			return procedureRepository.saveAll(proceduresToUpdate);
+		}
+		return Collections.emptyList();
 	}
-
-
 
 	@Override
 	public List<Procedure> getRecordsByIds(List<Long> recordIds) {
-        // Implement logic to fetch records from the database using recordIds
-        return procedureRepository.findAllById(recordIds);
-    }
+		// Implement logic to fetch records from the database using recordIds
+		return procedureRepository.findAllById(recordIds);
+	}
 
 	@Override
-	public void createDownloadableResource(List<Procedure> procedures) {
-        String csvContent = generateCSVContent(procedures);
+	public void createDownloadableResource(ProcedureFilterRequest filterRequest) {
+		List<Procedure> procedures = procedureRepository.findAll(ProcedureSpecifications.filterByProcedureRequest(filterRequest));
+		Optional<Claim> claimOptional = null;
+		Claim claim = new Claim();
 
-		// Define the download folder path
-		String downloadFolderPath = environment.getProperty("download.folder.path");
+		if(procedures != null){
+			claimOptional = claimRepository.findById(procedures.get(0).getClaim().getId());
 
-		// Define the file name
-		//String fileName = status.toLowerCase().trim()+"Records.csv";
-		String fileName = "Records_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".csv";
+			if(!claimOptional.isPresent()){
+				try {
+					throw new CustomNotFoundException("Claim with ID " + filterRequest.getClaimId() + " not found");
+				} catch (CustomNotFoundException e) {
+					e.printStackTrace();
+				}
+			}else{
+				claim = claimOptional.get();
+
+			}
+		}
+
+		String csvContent = generateCSVContent(procedures);
+
+		String downloadFolderPath = System.getenv("DOWNLOAD_FOLDER_PATH");
+		// String downloadFolderPath = environment.getProperty("download.folder.path");
+		String fileName = claim.getHospitalName() + "_" + claim.getNarration() + "_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".csv";
+		log.info("Filename {}", fileName);
+
+		// String fileName = "Records_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".csv";
 
 		try {
 			// Create the download folder if it doesn't exist
@@ -374,38 +499,37 @@ public class ProcedureServiceImpl implements ProcedureService {
 			if (!downloadFolder.exists()) {
 				downloadFolder.mkdirs();
 			}
-
 			// Create the CSV file
 			File csvFile = new File(downloadFolder, fileName);
 			try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
 				writer.write(csvContent);
 			}
+			
 
 			// Read the saved file's content as bytes
 			byte[] bytes = Files.readAllBytes(csvFile.toPath());
-
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 			headers.setContentDispositionFormData("attachment", fileName);
-
 			// return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
-			//log.info("Bytes: {}; headers {}, HttpStatus {}", bytes, headers, HttpStatus.OK);
+			// log.info("Bytes: {}; headers {}, HttpStatus {}", bytes, headers,
+			// HttpStatus.OK);
 		} catch (IOException e) {
 			// Handle the exception
 			e.printStackTrace();
 			// Return an error response here
 			// return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-			//log.info(" HttpStatus {}", HttpStatus.INTERNAL_SERVER_ERROR);
+			// log.info(" HttpStatus {}", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
-    }
+
+	}
 
 	@Override
 	public void markProcedureAsRejected(List<Procedure> procedures) {
 		for (Procedure procedure : procedures) {
 			// Find all procedures with the same lookup code and status ACCEPTED
-			List<Procedure> acceptedRecords = procedureRepository.findByLookUpCodeAndStatus(procedure, Status.ACCEPTED);
-			
+			List<Procedure> acceptedRecords = procedureRepository.findByLookUpCodeAndStatus(procedure.getLookUpCode(), Status.ACCEPTED);
+
 			// Mark all found records as REJECTED
 			acceptedRecords.forEach(record -> {
 				record.setStatus(Status.REJECTED);
@@ -414,7 +538,9 @@ public class ProcedureServiceImpl implements ProcedureService {
 	}
 
 	@Override
-	public void clearDB(){
-		procedureLookUpRepository.deleteAll();
+	public List<Procedure> deleteSelectedRecords(ProcedureFilterRequest filterRequest) {
+		List<Procedure> procedures = procedureRepository.findAll(ProcedureSpecifications.filterByProcedureRequest(filterRequest));
+		procedureRepository.deleteAll(procedures);
+		return procedures;
 	}
 }

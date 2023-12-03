@@ -21,6 +21,9 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @EnableWebSecurity
 public class SpringSecurity {
+    
+    @Autowired
+    private CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -60,7 +63,8 @@ public class SpringSecurity {
                         form -> form
                                 .loginPage("/login")
                                 .loginProcessingUrl("/login")
-                                .defaultSuccessUrl("/")
+                                // .defaultSuccessUrl("/")
+                                .successHandler(customAuthenticationSuccessHandler) 
                                 .permitAll()
                 ).logout(
                         logout -> logout

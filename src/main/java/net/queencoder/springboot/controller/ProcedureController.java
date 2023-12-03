@@ -1,6 +1,5 @@
 package net.queencoder.springboot.controller;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,18 +10,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import net.queencoder.springboot.dto.ProcedureFilterRequest;
 import net.queencoder.springboot.exception.CustomNotFoundException;
 import net.queencoder.springboot.model.Procedure;
 import net.queencoder.springboot.model.ProcedureLookUp;
@@ -30,6 +32,7 @@ import net.queencoder.springboot.model.Status;
 import net.queencoder.springboot.service.ProcedureService;
 
 @Controller
+// @RestController
 // @RequestMapping("/api/v1")
 @Slf4j
 public class ProcedureController {
@@ -37,43 +40,48 @@ public class ProcedureController {
     @Autowired
     public ProcedureService procedureService;
 
-    @GetMapping("/page/{pageNo}")
-    public String findPaginated(
-            @PathVariable(value = "pageNo") int pageNo,
-            @RequestParam("sortField") String sortField,
-            @RequestParam("sortDir") String sortDir,
-            @RequestParam(value = "query", required = false) String query,
-            @RequestParam(value = "statuses", defaultValue = "ACCEPTED,UNACCEPTED") String statuses,
-            Model model) {
-        int pageSize = 20;
+    public String findPaginated(@PathVariable(value = "pageNo") int pageNo, @ModelAttribute ProcedureFilterRequest filterRequest, Model model) {
 
-        List<Status> statusEnums = Arrays.stream(statuses.split(","))
-                .map(Status::valueOf)
-                .collect(Collectors.toList());
+        int pageSize = Integer.parseInt(filterRequest.getPageSize());
 
-        Page<Procedure> page = procedureService.findPaginated(pageNo, pageSize, sortField, sortDir, query, statusEnums);
+        Page<Procedure> page = procedureService.findPaginated(pageNo, pageSize, filterRequest.getSortField(), filterRequest.getSortDir(), filterRequest);
         List<Procedure> procedures = page.getContent();
 
+        if (procedures.isEmpty()) {
+            model.addAttribute("message", "No procedures found for the given filter criteria.");
+            return "error"; 
+        }
         model.addAttribute("currentPage", pageNo);
         model.addAttribute("totalPages", page.getTotalPages());
         model.addAttribute("totalItems", page.getTotalElements());
+        model.addAttribute("pageSize", pageSize);
 
-        model.addAttribute("sortField", sortField);
-        model.addAttribute("sortDir", sortDir);
-        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+        model.addAttribute("sortField", filterRequest.getSortField());
+        model.addAttribute("sortDir", filterRequest.getSortDir());
+        model.addAttribute("reverseSortDir", filterRequest.getSortDir().equals("asc") ? "desc" : "asc");
 
         model.addAttribute("procedures", procedures);
         List<String> staticStatus = Arrays.asList("ACCEPTED", "UNACCEPTED", "REJECTED");
         model.addAttribute("staticStatus", staticStatus);
-        model.addAttribute("statuses", statuses);
-        model.addAttribute("query", query);
-        return "index";
+        model.addAttribute("statuses", filterRequest.getStatuses());
+
+        int previousPage = Math.max(1, pageNo - 1);
+        int nextPage = Math.min(page.getTotalPages(), pageNo + 1);
+
+        model.addAttribute("previousPage", previousPage);
+        model.addAttribute("nextPage", nextPage);
+
+        List<String> sortOptions = Arrays.asList("editDistance", "lookUpCode", "status");
+    model.addAttribute("sortOptions", sortOptions);
+
+        return "procedures";
     }
 
-    @GetMapping("/")
-    public String viewHomePage(Model model) {
-        return findPaginated(1, "editDistance", "asc", "", "ACCEPTED,UNACCEPTED", model);
+    @GetMapping("/procedures/page/{pageNo}")
+    public String viewProcedures(@PathVariable(value = "pageNo") int pageNo, @ModelAttribute("filterRequest") ProcedureFilterRequest filterRequest, Model model) {
+        return findPaginated(pageNo, filterRequest, model);
     }
+    
 
     // This is to test the procedure upload
     @PostMapping("/api/v1/upload")
@@ -119,10 +127,12 @@ public class ProcedureController {
         String referer = request.getHeader("Referer");
 
         if (lookupCodeResult.size() == 1) {
-            procedureService.updateStatus(existingProcedure, "accept".equals(status)? Status.ACCEPTED : Status.REJECTED);
+            procedureService.updateStatus(existingProcedure,
+                    "accept".equals(status) ? Status.ACCEPTED : Status.REJECTED);
         } else {
-            procedureService.updateStatusInBatches(lookupCodeResult, "accept".equals(status)? Status.REJECTED : null);
-            procedureService.updateStatus(existingProcedure, "accept".equals(status)? Status.ACCEPTED : Status.REJECTED);
+            procedureService.updateStatusInBatches(lookupCodeResult, "accept".equals(status) ? Status.REJECTED : null);
+            procedureService.updateStatus(existingProcedure,
+                    "accept".equals(status) ? Status.ACCEPTED : Status.REJECTED);
         }
         return "redirect:" + referer;
     }
@@ -131,106 +141,127 @@ public class ProcedureController {
     public String findAllMatches(
             @PathVariable Long id,
             HttpServletRequest request,
+            @ModelAttribute ProcedureFilterRequest filterRequest,
             Model model) throws CustomNotFoundException {
         Procedure existingProcedure = procedureService.findById(id);
         List<Procedure> lookupCodeResult = procedureService.findByLookUpCode(existingProcedure);
 
         String referer = request.getHeader("Referer");
 
-        if (lookupCodeResult != null && !lookupCodeResult.isEmpty()) {
+
+        if (lookupCodeResult.size() > 1) {
             model.addAttribute("procedures", lookupCodeResult);
+            model.addAttribute("code", lookupCodeResult.get(0).getLookUpCode());
+            model.addAttribute("filterRequest", filterRequest);
+            log.info("referer", referer);
             return "modal";
         } else {
             model.addAttribute("message", "No matches found for this record");
-            return "modal"; // Return the same view to display the message
+                            log.info("referer", referer);
+            return "error"; // Return the same view to display the message
         }
     }
-    
-    @GetMapping("/bulkAccept")
+
+    @GetMapping("/procedures/bulkAccept")
     public String bulkAccept(
-        @RequestParam("recordIds") List<Long> recordIds,
-        HttpServletRequest request,
-        Model model
-    ) throws CustomNotFoundException {
+            @RequestParam("recordIds") List<Long> recordIds,
+            HttpServletRequest request,
+            Model model) throws CustomNotFoundException {
         String referer = request.getHeader("Referer");
         if (!recordIds.isEmpty()) {
             List<Procedure> selectProcedures = procedureService.getAllById(recordIds);
             procedureService.markProcedureAsRejected(selectProcedures);
-            
+
             procedureService.updateStatusInBatches(selectProcedures, Status.ACCEPTED);
         }
 
         return "redirect:" + referer;
     }
 
-     @GetMapping("/bulkReject")
+    @GetMapping("/procedures/bulkReject")
     public String bulkReject(
-        @RequestParam("recordIds") List<Long> recordIds,
-        HttpServletRequest request,
-        Model model
-    ) throws CustomNotFoundException {
+            @RequestParam("recordIds") List<Long> recordIds,
+            HttpServletRequest request,
+            Model model) throws CustomNotFoundException {
         String referer = request.getHeader("Referer");
         log.info("IDs {}", recordIds);
         if (!recordIds.isEmpty()) {
-             List<Procedure> selectProcedures = procedureService.getAllById(recordIds);
-            
+            List<Procedure> selectProcedures = procedureService.getAllById(recordIds);
+             log.info("Proceessed IDs {}", recordIds);
             procedureService.updateStatusInBatches(selectProcedures, Status.REJECTED);
         }
 
         return "redirect:" + referer;
     }
-    
+
     /*
      * This method is to rematch records when CBA code matches to multiple records
      */
     // @GetMapping("/rematch/{id}")
     // public String rematchAndUpdateStatus(
-    //         @PathVariable Long id,
-    //          @RequestParam(value = "status") String status,
-    //         HttpServletRequest request,
-    //         Model model) throws CustomNotFoundException {
-    //     Procedure existingProcedure = procedureService.findById(id);
-    //     List<Procedure> lookupCodeResult = procedureService.findByLookUpCode(existingProcedure);
-    //       List<Procedure> updatedProcedures = new ArrayList<>();
-        
-    //     if("accept".equals(status)){
-    //         existingProcedure.setStatus(Status.ACCEPTED);
-    //          updatedProcedures = lookupCodeResult.stream()
-    //             .filter(record -> record.getId() != existingProcedure.getId())
-    //             .peek(record -> record.setStatus(Status.REJECTED))
-    //             .collect(Collectors.toList());
-    //     }else if ("reject".equals(status)) {
-    //            updatedProcedures = lookupCodeResult.stream()
-    //             .peek(record -> record.setStatus(Status.REJECTED))
-    //             .collect(Collectors.toList());
-    //     }
-    //     updatedProcedures.add(existingProcedure);
+    // @PathVariable Long id,
+    // @RequestParam(value = "status") String status,
+    // HttpServletRequest request,
+    // Model model) throws CustomNotFoundException {
+    // Procedure existingProcedure = procedureService.findById(id);
+    // List<Procedure> lookupCodeResult =
+    // procedureService.findByLookUpCode(existingProcedure);
+    // List<Procedure> updatedProcedures = new ArrayList<>();
 
-    //     if (!updatedProcedures.isEmpty()) {
-    //         procedureService.updateStatusInBatches(updatedProcedures);
-    //     }
-    //     String referer = request.getHeader("Referer");
-    //     return "redirect:" + referer; // Redirect back to the original page
+    // if("accept".equals(status)){
+    // existingProcedure.setStatus(Status.ACCEPTED);
+    // updatedProcedures = lookupCodeResult.stream()
+    // .filter(record -> record.getId() != existingProcedure.getId())
+    // .peek(record -> record.setStatus(Status.REJECTED))
+    // .collect(Collectors.toList());
+    // }else if ("reject".equals(status)) {
+    // updatedProcedures = lookupCodeResult.stream()
+    // .peek(record -> record.setStatus(Status.REJECTED))
+    // .collect(Collectors.toList());
+    // }
+    // updatedProcedures.add(existingProcedure);
+
+    // if (!updatedProcedures.isEmpty()) {
+    // procedureService.updateStatusInBatches(updatedProcedures);
+    // }
+    // String referer = request.getHeader("Referer");
+    // return "redirect:" + referer; // Redirect back to the original page
     // }
 
-    @GetMapping("/bulkDownload")
+    @GetMapping("/procedures/bulkDownload")
     public String bulkDownload(
-        @RequestParam List<Long> recordIds,
-        HttpServletRequest request
-        ) {
-            log.info("IDs {}", recordIds);
-        // Fetch records from the database using the recordIds
-        List<Procedure> records = procedureService.getRecordsByIds(recordIds);
+        @ModelAttribute ProcedureFilterRequest filterRequest,
+            HttpServletRequest request) throws CustomNotFoundException {
+        procedureService.createDownloadableResource(filterRequest);
 
-        // Create a downloadable resource (e.g., a zip file containing records)
-        procedureService.createDownloadableResource(records);
-
-        // Return the resource as a ResponseEntity
-         String referer = request.getHeader("Referer");
+        String referer = request.getHeader("Referer");
         return "redirect:" + referer;
     }
 
-    //This method is used to download records using their status. The bulk upload replaced this
+    @GetMapping("/procedures/page/{currentPage}/delete")
+    public String bulkDelete(
+            @ModelAttribute ProcedureFilterRequest filterRequest,
+            RedirectAttributes redirectAttributes,
+            @PathVariable(value = "currentPage") int currentPage,
+            HttpServletRequest request,
+            Model model) throws CustomNotFoundException {
+        List<Procedure> deletedProcedures = procedureService.deleteSelectedRecords(filterRequest);
+        String referer = request.getHeader("Referer");
+    
+        // Add flash attributes for success and deleted records
+        if (!deletedProcedures.isEmpty()) {
+            redirectAttributes.addFlashAttribute("successMessage", "Records successfully deleted.");
+            redirectAttributes.addFlashAttribute("deletedProcedures", deletedProcedures);
+    
+            return "redirect:/procedures/page/" + currentPage;
+        } else {
+            return "redirect:" + referer;
+        }
+    }
+    
+
+    // This method is used to download records using their status. The bulk upload
+    // replaced this
     @GetMapping("/download/{status}")
     public String downloadRecordsByStatus(@PathVariable String status, HttpServletRequest request) {
         procedureService.downloadRecordsByStatus(status);
@@ -239,17 +270,10 @@ public class ProcedureController {
         return "redirect:" + referer;
     }
 
-    // This method is used as an API to upload the lookup table procedures. 
+    // This method is used as an API to upload the lookup table procedures.
     @PostMapping("/api/v1/upload-lookup")
     public ResponseEntity<List<ProcedureLookUp>> uploadLookUpData(@RequestParam("File") MultipartFile file)
             throws Exception {
         return new ResponseEntity<>(procedureService.uploadLookUpData(file), HttpStatus.OK);
-    }
-    // @DeleteMapping("/delete")
-    @RequestMapping(value = "/delete", method = {RequestMethod.GET, RequestMethod.DELETE})
-    public String clearDB(HttpServletRequest request){
-        String referer = request.getHeader("Referer");
-        procedureService.clearDB();
-       return "redirect:" + referer;
     }
 }

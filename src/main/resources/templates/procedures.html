@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="ISO-8859-1">
+	<title>Queencoder</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" th:href="@{/css/index.css}">
+	<!--GOOGLE FONTS (Montserrat)-->
+	<link
+		href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap"
+		rel="stylesheet">
+	<link rel="stylesheet" th:href="@{/css/record.css}">
+	<script src="https://kit.fontawesome.com/1385283e69.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid  header__container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">Logo</a>
+			</div>
+			<div class="collapse navbar-collapse  navbar-right" id="myNavbar">
+				<ul class="nav navbar-nav">
+					<li><a th:href="@{/}">Home</a></li>
+				</ul>
+				<ul class="nav navbar-nav" th:with="userDetails=${session.userDetails}">
+					<li><a th:href="@{/logout}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+					<li><a href="#"><span class="glyphicon glyphicon-user"></span>
+							<p th:text="${userDetails.name}" style="display: inline; padding-left: 1.0rem;"></p>
+						</a></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div class="container-fluid text-center">
+		<div class="row content_">
+			<div class="col-sm-2 sidenav">
+			</div>
+			<div class="col-sm-8 text-left">
+				<div class="main__top">
+					<div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+						<div style="float: left;">
+							<h3 style="color: #008080;">Matched Procedures</h3>
+						</div>
+						<div style="float: right; display: flex; flex-direction: row; justify-content:space-between; align-items: center;">
+							<div class="dropdown">
+								<button class="btn btn-primary dropdown-toggle bulk__action-button" type="button" data-toggle="dropdown" >Bulk Actions
+								<span class="caret"></span></button>
+								<ul class="dropdown-menu">
+								  <li>
+									<form th:action="@{/procedures/bulkAccept}" method="get">
+										<input type="hidden" id="acceptSelectedRecordIds" th:name="recordIds" th:value="${selectedRecordIds}" />
+										<button type="submit" id="acceptButton" class="dropdown-item" style="margin-left: 2rem; background: none;">Accept</button>
+									</form>
+								</li>
+								<li>
+									<form th:action="@{/procedures/bulkReject}" method="get">
+										<input type="hidden" id="rejectSelectedRecordIds" th:name="recordIds" th:value="${selectedRecordIds}" />
+										<button type="submit" id="rejectButton" class="dropdown-item" style="margin-left: 2rem; background: none;">Reject</button>
+									</form>
+								</li>
+								<li>
+									<form th:action="@{/procedures/bulkDownload}" method="get" id="bulkDownloadForm">
+										<!-- Other filter options as needed -->
+										<input type="hidden" name="name" th:value="${filterRequest.name}" />
+										<input type="hidden" name="lookUpName" th:value="${filterRequest.lookUpName}" />
+										<input type="hidden" name="lookUpCode" th:value="${filterRequest.lookUpCode}" />
+										<input type="hidden" name="editDistance" th:value="${filterRequest.editDistance}" />
+										<input type="hidden" name="statuses" th:value="${filterRequest.statuses}" />
+										<input type="hidden" name="claimId" th:value="${filterRequest.claimId}" />
+
+										<button type="submit" onclick="submitForm()" class="dropdown-item" style="margin-left: 2rem; background: none;">Spool to Excel</button>
+									</form>
+								</li>
+								   <!-- <li><a href="#">Rematch</a></li> -->
+								  <li>
+									<form th:action="@{/procedures/page/{currentPage}/delete(currentPage=${currentPage})}" method="get" id="bulkDeleteForm">
+										<input type="hidden" name="name" th:value="${filterRequest.name}" />
+										<input type="hidden" name="lookUpName" th:value="${filterRequest.lookUpName}" />
+										<input type="hidden" name="lookUpCode" th:value="${filterRequest.lookUpCode}" />
+										<input type="hidden" name="editDistance" th:value="${filterRequest.editDistance}" />
+										<input type="hidden" name="statuses" th:value="${filterRequest.statuses}" />
+										<input type="hidden" name="claimId" th:value="${filterRequest.claimId}" />
+										<button type="submit" onclick="submitForm()" class="delete-item" style="margin-left: 2rem; background: none;">Delete</button>
+									</form>
+								  </li>
+								</ul>
+							  </div>
+							  <div class="dropdown" style="margin-left: 1rem;">
+								<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" style="background-color: #008080; border: none;">Sort By
+								<span class="caret"></span></button>
+								<ul class="dropdown-menu">
+									<!-- <li th:each="sortOption : ${sortOptions}">
+										<form th:action="@{/procedures/page/{currentPage}(currentPage=${currentPage})}" method="get" id="sortForm">
+											<input type="hidden" name="currentPage" th:value="${currentPage}" />
+											<input type="hidden" name="claimId" th:value="${claimId}" />
+											<input type="hidden" name="pageSize" th:value="${pageSize}" />
+											<input type="hidden" name="statuses" th:value="${statuses}" />
+											<input type="hidden" name="sortField" th:value="${sortOption}" />
+											<input type="hidden" name="sortDir" th:value="${reverseSortDir}" />
+											<button type="submit" th:text="${sortOption}" onclick="submitSortForm()"></button>
+										</form>
+									</li> -->
+									<li><a th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=${pageSize}, sortField='editDistance', sortDir=${reverseSortDir}, statuses=${statuses})}">Edit Distance</a></li>
+									<li><a th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=${pageSize}, sortField='lookUpCode', sortDir=${reverseSortDir}, statuses=${statuses})}">Code</a></li>
+									<li><a th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=${pageSize}, sortField='status', sortDir=${reverseSortDir}, statuses=${statuses})}">Status</a></li>
+								</ul>
+							  </div>
+						</div>
+					</div>
+				</div>
+				<div class="main__filter" style="padding-top: 0.8rem;">					
+					<form th:action="@{/procedures/page/{currentPage}(currentPage=${currentPage})}" th:object="${filterRequest}" method="get">
+						<div class="input-group">
+							<input class="form-control" type="text" placeholder="Search..."
+							data-toggle="modal" data-target="#filterModal" aria-label="Search" style="border:none; font-size: 2rem;height: 4.5rem;">
+							<div class="input-group-btn">
+								<button class="btn btn-default" type="submit" style="height: 4.5rem; background-color: #008080;">
+									<i class="glyphicon glyphicon-search" style="font-size: 2rem;color: white;"></i>
+								</button>
+							</div>
+						</div>
+						<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
+							aria-hidden="true">
+							<div class="modal-dialog" role="document">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title" id="filterModalLabel">Filter Options</h5>
+										<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+											<span aria-hidden="true">&times;</span>
+										</button>
+									</div>
+									<div class="modal-body">
+										<div class="form-group">
+											<label for="procedureName">Procedure Name:</label>
+											<input type="text" class="form-control" id="procedureName" name="name" th:field="*{name}">
+										</div>
+										<div class="form-group">
+											<label for="cbaName">CBA Name:</label>
+											<input type="text" class="form-control" id="cbaName" name="lookUpName" th:field="*{lookUpName}">
+										</div>
+										<div class="form-group">
+											<label for="cbaCode">CBA Code:</label>
+											<input type="text" class="form-control" id="cbaCode" name="lookUpCode" th:field="*{lookUpCode}">
+										</div>
+										<div class="form-group">
+											<label for="editDistance">Match Degree:</label>
+											<input type="text" class="form-control" id="editDistance" name="editDistance" th:field="*{editDistance}">
+										</div>	
+										<!-- <div>
+											<label for="customRange3" class="form-label">Match degree</label>
+											<input type="range" class="form-range" min="0" max="100" step="1" name="editDistance" id="customRange3" th:field="*{editDistance}">		
+										</div>									 -->
+										<div class="form-group">
+											<label for="matchStatus">Select Status:</label>
+											<div class="dropdown">
+												<input type="text" class="form-control dropdown-toggle" id="matchStatus" data-toggle="dropdown"
+																aria-haspopup="true" aria-expanded="false" name="statuses"
+																th:field="*{statuses}" th:value="${statuses}">
+												<div class="dropdown-menu" aria-labelledby="statusDropdown" >
+													<a class="dropdown-item" href="#" th:each="status : ${staticStatus}" th:attr="data-status=${status}" th:text="${status}" style="display: block;">Select</a>
+												</div>
+											</div>
+										</div>
+										<div id="selectedStatus" >
+											<span th:text="${currentArray != null ? currentArray.join(', ') : ''}"></span>
+										</div>
+										<input type="hidden" id="selectedStatusArray" th:value="${selectedStatusArray}" />
+										<div class="form-group">
+											<label for="claimId">Claim Id:</label>
+											<input type="text" class="form-control" id="claimId" name="claimId" th:field="*{claimId}">
+										</div>
+										<input type="hidden" name="sortField" th:value="${filterRequest.sortField}" />
+										<input type="hidden" name="sortDir" th:value="${filterRequest.sortDir}" />
+										<input type="hidden" name="pageSize" th:value="${filterRequest.pageSize}" />
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+										<!-- <button type="button" class="btn btn-secondary" onclick="resetFilterModal()">Reset</button> -->
+										
+										<button type="submit" class="btn btn-primary" style="background-color: #008080;" id="filterForm">Filter</button>
+									</div>
+								</div>
+							</div>
+							
+						</div>
+					</form>
+				</div>
+				<div class="table-responsive table-main main__bottom">
+
+					<table class="table">
+						<thead>
+							<tr>
+								<th>
+									<input type="checkbox" id="selectAllCheckbox" />
+								</th>
+								<th></th>
+								<th>#</th>
+								<th>Status</th>
+								<th>Procedure Name</th>
+								<th>Look Up Name</th>
+								<th>Look Up Code</th>
+								<th>Match Degree</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="procedure, i : ${procedures}" class="accept-icon reject-icon">
+								<td>
+									<input type="checkbox" class="recordCheckbox" th:id="${'checkbox_' + procedure.id}"
+										name="selectedItems" th:value="${procedure.id}" />
+								</td>
+								<td>
+									<div class="dropdown">
+										<a class="btn btn-primary dropdown-toggle btn-caret dropdown__button" data-toggle="dropdown">
+											<span class="caret"></span></a>
+										<ul class="dropdown-menu">
+											<li><a th:href="@{/matches/{id}(id=${procedure.id})}">Matches</a></li>
+											<!-- <li><a href="#">Edit</a></li> -->
+										</ul>
+									</div>
+								</td>
+								<td th:text="${((currentPage - 1) * pageSize) + i.index + 1}"></td>
+								<td>
+									<a th:text="${procedure.status}"
+										th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
+									</a>
+
+								</td>
+								<td th:text="${procedure.name}"></td>
+								<td th:text="${procedure.lookUpName}"></td>
+								<td th:text="${procedure.lookUpCode}"></td>
+								<!-- <td th:text="${procedure.editDistance}"></td> -->
+								<td>
+									<span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
+
+								</td>
+								<td >
+									<div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center;">
+										<div class="accept-icon action-icon-accept">
+											<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
+												class="action-icon-accept">
+												<span class="glyphicon glyphicon-ok" style="color:green; font-size: 2rem;"></span>
+											</a>
+										</div>
+										<div style="margin-left: 1.5rem;" class="reject-icon action-icon-reject">
+											<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
+												class="action-icon-reject">
+												<span class="glyphicon glyphicon-remove" style="color:crimson; font-size: 2rem;"></span>
+											</a>
+										</div>
+									</div>
+								</td>
+							</tr>
+
+						</tbody>
+					</table>
+					<div class="pagination__main">
+						<ul class="pagination__list">
+							<li class="pagination__text">Row per page:</li>
+							<li>
+								<div class="dropdown">
+									<a class="btn btn-primary dropdown-toggle btn-caret pagination__button-main" data-toggle="dropdown"
+										>
+										<span th:text="${pageSize}" class="pagination__text"></span>
+										<span class="caret "></span>
+									</a>
+									<ul class="dropdown-menu pagination__menu">
+										<li><a
+												th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=10, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">10</a>
+										</li>
+										<li><a
+												th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=50, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">50</a>
+										</li>
+										<li><a
+												th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=100, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">100</a>
+										</li>
+										<li><a
+												th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=200, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">200</a>
+										</li>
+										<li><a
+												th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=500, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">500</a>
+										</li>
+										<li><a
+												th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=1000, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">1000</a>
+										</li>
+									</ul>
+								</div>
+							</li>
+							<li
+								th:text="${((currentPage - 1) * pageSize + 1) + ' - ' + ((currentPage * pageSize) < totalItems ? (currentPage * pageSize) : totalItems) + ' of ' + totalItems}" class="pagination__text">
+							</li>
+							<li>
+								<a th:href="@{/procedures/page/{previousPage}(previousPage=${previousPage}, claimId=${claimId}, pageSize=${pageSize}, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}"
+									th:if="${currentPage > 1}" title="Previous Page">
+									<span class="glyphicon glyphicon-chevron-left pagination__icon"></span>
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/procedures/page/{nextPage}(nextPage=${nextPage}, claimId=${claimId}, pageSize=${pageSize}, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}"
+									th:if="${currentPage < totalPages}" title="Next Page">
+									<span class="glyphicon glyphicon-chevron-right pagination__icon"></span>
+								</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-2 sidenav">
+			<!-- <div class="well">
+					<p>ADS</p>
+				</div>
+				<div class="well">
+					<p>ADS</p>
+				</div> -->
+		</div>
+	</div>
+	</div>
+	<div th:if="${successMessage}" class="alert alert-success" role="alert">
+		<p th:text="${successMessage}"></p>
+	</div>
+	<script>
+		function saveFilter() {
+			
+			$('#filterModal').modal('hide');
+		}
+		function clearInput(inputId) {
+        	document.getElementById(inputId).value = '';
+    	}
+	</script>
+	<script th:inline="javascript">
+		
+		$(document).ready(function () {
+			/*<![CDATA[*/
+		// Function to handle status selection
+			function setStatus(element) {
+				var status = element.getAttribute('data-status');
+				console.log(status);
+		
+				// Update the selectedStatusArray
+				var selectedStatusArray = document.getElementById('selectedStatusArray');
+				var currentArray = JSON.parse(selectedStatusArray.value || '[]');
+		
+				if (!currentArray.includes(status)) {
+					currentArray.push(status);
+				}
+		
+				selectedStatusArray.value = JSON.stringify(currentArray);
+				console.log(JSON.stringify(currentArray));
+		
+				// Update the display of selected statuses
+				updateStatusDisplay();
+			}
+	
+			function updateStatusDisplay() {
+				var statusDisplay = document.getElementById('selectedStatus');
+				var spanElement = statusDisplay.querySelector('span');
+		
+				if (spanElement) {
+					var currentArray = JSON.parse(selectedStatusArray.value || '[]');
+					spanElement.innerText = currentArray.join(', ');
+
+					// Update the hidden input field with selected values
+					document.getElementById('matchStatus').value = currentArray.join(',');
+				}
+			}
+			function submitForm() {
+				document.getElementById('bulkDownloadForm').submit();
+			}
+			function submitForm() {
+				document.getElementById('bulkDDeleteForm').submit();
+			}
+
+			function submitSortForm() {
+				document.getElementById('sortForm').submit();
+			}
+
+			
+		
+			// Add event listeners to dropdown items
+			var dropdownItems = document.querySelectorAll('.dropdown-item[data-status]');
+			dropdownItems.forEach(function (item) {
+				item.addEventListener('click', function () {
+					setStatus(item);
+				});
+			});
+			
+	});
+	function resetFilterModal() {
+			$('#filterModal input[type="text"]').val('');
+			$('#filterModal input[type="hidden"]').val('');
+
+			// Clear the dropdown selection
+			$('#matchStatus').val('');
+
+			// Clear the selected status in the div
+			$('#selectedStatus span').text('');
+			console.log("Testing")
+			// $('#filterModal').modal('hide');
+		}		
+		
+	</script>
+
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	<script src="/js/checkbox_bulk_selection.js"></script>
+	<script src="/js/three_dot_icon.js"></script>
+</body>
+
+</html>
+
+
+
+

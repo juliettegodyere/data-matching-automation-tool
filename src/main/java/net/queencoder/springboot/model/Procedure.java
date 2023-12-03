@@ -37,5 +37,9 @@ public class Procedure extends AuditModel{
 	
 	@Enumerated(EnumType.STRING)
     private Status status;
+
+	@ManyToOne
+    @JoinColumn(name = "claim_id")
+    private Claim claim;
 	
 }

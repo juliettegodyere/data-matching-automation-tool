@@ -79,6 +79,7 @@ $(document).ready(function () {
     // Handle individual record checkboxes
     $(".recordCheckbox").change(function () {
         var recordIds = $(this).val();
+        // var recordIds = parseInt($(this).val(), 10);
 
         if ($(this).is(":checked")) {
             selectedRecordIds.push(recordIds);
@@ -136,5 +137,7 @@ $(document).ready(function () {
         // Set the selected record IDs as a hidden field value
         $("#downloadSelectedRecordIds").val(selectedRecordIds);
     });
+
+    
 });
 

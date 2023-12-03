@@ -1,0 +1,10 @@
+.form-control-file{
+   font-size: medium;
+   color: var(--color-gray-100);
+   /* background-color: brown; */
+   border-radius: 5px;
+   padding: 1rem;
+}
+.container__main{
+    padding-bottom: 2rem;
+}

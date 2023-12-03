@@ -1,13 +1,54 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Error</title>
-</head>
+    <head>
+        <meta charset="ISO-8859-1">
+        <title>Queencoder</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" th:href="@{/css/index.css}">
+        <!--GOOGLE FONTS (Montserrat)-->
+        <link
+            href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet" th:href="@{/css/record.css}">
+        <script src="https://kit.fontawesome.com/1385283e69.js" crossorigin="anonymous"></script>
+    </head>
 <body>
+    <nav class="navbar navbar-inverse">
+		<div class="container-fluid  header__container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">Logo</a>
+			</div>
+			<div class="collapse navbar-collapse  navbar-right" id="myNavbar">
+				<ul class="nav navbar-nav">
+					<li><a th:href="@{/}">Home</a></li>
+				</ul>
+				<ul class="nav navbar-nav" th:with="userDetails=${session.userDetails}">
+					<li><a th:href="@{/logout}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+					<li><a href="#"><span class="glyphicon glyphicon-user"></span>
+							<p th:text="${userDetails.name}" style="display: inline; padding-left: 1.0rem;"></p>
+						</a></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
     <div class="container">
-        <h1>An Error Occured. Contact Admin</h1>
-        <p th:text="${errorMessage}"></p>
+        <h1>Oops, an Error Occured - contact Admin.</h1>
+        <p th:text="${message}" style="color: red; font-size: medium;">!</p>
+        <button type="button" class="btn btn-info" style="background-color: #008080;" onclick="goBack()">Go Back</button>
     </div>
+    <script>
+        function goBack() {
+            // Go back to the previous page
+            window.history.back();
+        }
+    </script>
 </body>
 </html>

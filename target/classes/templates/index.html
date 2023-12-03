@@ -1,233 +1,247 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 
 <head>
-	<meta charset="ISO-8859-1">
-	<title>Fuzzy String Matching</title>
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-		integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+	<title>Queencoder</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 	<link rel="stylesheet" th:href="@{/css/index.css}">
-	<script src="https://kit.fontawesome.com/1385283e69.js" crossorigin="anonymous"></script>
-	<!-- Add this JavaScript code to your HTML file -->
-
+	<!--GOOGLE FONTS (Montserrat)-->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
-
 <body>
-	<nav class="navbar navbar-light" style="background-color: #e3f2fd;">
-		<div class="container">
-			<a class="navbar-brand">Logo</a>
-			<a href="/delete">
-				Delete
-			</a>
-			<form th:action="@{/page/{pageNo}(pageNo=1)}" method="get" class="d-flex" role="search">
-				<input class="form-control me-2" type="text" name="query" placeholder="Search..." th:value="${query}"
-					aria-label="Search">
-				<input type="hidden" name="sortField" th:value="${sortField}">
-				<input type="hidden" name="sortDir" th:value="${sortDir}">
-				<input type="hidden" name="statuses" th:value="${statuses}">
-				<button class="btn btn-outline-success" type="submit">Search</button>
-			</form>
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid  header__container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">Logo</a>
+			</div>
+			<!-- <form class="navbar-form navbar-left form__container" action="/action_page.php">
+				<div class="input-group input__container">
+				  <input type="text" class="form-control" placeholder="Search" name="search">
+				  <div class="input-group-btn">
+					<button class="btn btn-default" type="submit">
+					  <i class="glyphicon glyphicon-search"></i>
+					</button>
+				  </div>
+				</div>
+			  </form> -->
+			<div class="collapse navbar-collapse  navbar-right" id="myNavbar">
+				<ul class="nav navbar-nav">
+					<li><a th:href="@{/upload-schedule}">Upload Schedule</a></li>
+				</ul>
+				<ul class="nav navbar-nav"  th:with="userDetails=${session.userDetails}">
+					<li><a th:href="@{/logout}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+					<li><a href="#"><span class="glyphicon glyphicon-user"></span>   <p th:text="${userDetails.name}" style="display: inline; padding-left: 1.0rem;"></p> </a></li>
+				</ul>
+			</div>
 		</div>
 	</nav>
-	<main class="container">
-		<!-- <h2><span th:if="${errorMessage}" th:text="${errorMessage}">Error</span></h2> -->
-		<!-- <h1 th:unless="${errorMessage}">List of Matched Procedures</h1> -->
-		<div class="subHeader">
-			<div  id="buttonContainer" class="dynamicIcons">
-				<div class="acceptIcon">
-					<form th:action="@{/bulkAccept}" method="get">
-						<input type="hidden"  id="acceptSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
-						<button id="acceptButton" type="submit" class="btn btn-link p-0">
-							<i class="fas fa-check-circle fa-2x acceptIconStyle"></i> 
-						</button>
-					</form>
-				</div>
-				<div class="rejectIcon">
-					<form th:action="@{/bulkReject}" method="get">
-						<input type="hidden"  id="rejectSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}" />
-						<button id="rejectButton" type="submit" class="btn btn-link p-0">
-							<i class="fas fa-times-circle fa-2x rejectIconStyle"></i>
-						</button>
-					</form>
-				</div>
-				<div class="downloadIcon">
-					<form th:action="@{/bulkDownload}" method="get">
-						<input type="hidden" id="downloadSelectedRecordIds" name="recordIds" th:value="${selectedRecordIds}"/>
-						<button id="downloadButton" type="submit" class="btn btn-link p-0">
-							<i class="fas fa-download fa-2x downloadIconStyle"></i>
-						</button>
-					</form>
-				</div>
+	<div class="container-fluid text-center">
+		<div class="row content_">
+			<div class="col-sm-2 sidenav">
+				<!-- <p><a href="#">Link</a></p>
+				<p><a href="#">Link</a></p>
+				<p><a href="#">Link</a></p> -->
 			</div>
-			<div class="actionButtons">
-				<div class="newButton">
-					<a th:href="@{/upload-schedule}" class="buttonSize">
-						<button class="custom-button">New</button>
-					</a>
-				</div>
-				<div class="filterButton">
-					<a class="custom-btn dropdown-toggle" data-toggle="dropdown" aria-expanded="false" style="color: #fff;">
-						Filter 
-					</a>
-					<ul class="dropdown-menu">
-						<li th:each="status : ${staticStatus}">
-							<a class="custom-dropdown-item"
-							   th:href="@{/page/{pageNo}(pageNo=1, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${status})}"
-							   th:text="${status}">Link Text</a>
-						</li>
-					</ul>
-				</div>					
-			</div>
-		</div>
-		<div class="content">
-			<table border="0" class="table table-responsive-md" th:unless="${errorMessage}">
-				<thead>
-					<tr>
-						<th>
-							<input type="checkbox" id="selectAllCheckbox" />
-						</th>
-						<th>
-							
-						</th>
-						<th>
-							<a
-								th:href="@{'/page/' + ${currentPage} + '?sortField=status&sortDir=' + ${reverseSortDir}}">
-								Status</a>
-						</th>
-						<th>
-							<a
-								th:href="@{'/page/' + ${currentPage} + '?sortField=name&sortDir=' + ${reverseSortDir}}">
-								Procedure Name</a>
-						</th>
-						<th>
-							<a
-								th:href="@{'/page/' + ${currentPage} + '?sortField=lookUpName&sortDir=' + ${reverseSortDir}}">
-								Look Up Name</a>
-						</th>
-						<th>Look Up Code</th>
-						<th>
-							<a
-								th:href="@{'/page/' + ${currentPage} + '?sortField=editDistance&sortDir=' + ${reverseSortDir}}">
-								Match Degree</a>
-						</th>
-						<th>Quantity</th>
-						<th>Rate</th>
-						<th style="width: 100px;"> </th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr th:each="procedure, i : ${procedures}" class="accept-icon reject-icon">
-						<td>
-							<input type="checkbox" class="recordCheckbox" th:id="${'checkbox_' + procedure.id}"
-								name="selectedItems" th:value="${procedure.id}" />
-						</td>
-						<td>
-							<span class="menu-container">
-								<a class="custom-link"><i class="fas fa-ellipsis-v" style="size: 2em;"></i></a>
-								<ul class="menu">
-									<li><a th:href="@{/matches/{id}(id=${procedure.id})}">Matches</a></li><hr/>
-									<!-- <li><a href="#">View</a></li><hr/> -->
-									<li><a href="#">Edit</a></li>
+			<div class="col-sm-8 text-left">
+				<div class="main__top">
+					<div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+						<div style="float: left;">
+							<h4 style="color: #008080;">List of Uploaded Schedules</h3>
+						</div>
+						<div style="float: right; display: flex; flex-direction: row; justify-content:space-between; align-items: center;">
+							<div class="dropdown">
+								<button class="btn btn-primary dropdown-toggle bulk__action-button" type="button" data-toggle="dropdown" >Bulk Actions
+								<span class="caret"></span></button>
+								<ul class="dropdown-menu">
+								  <li><a href="#">Delete</a></li>
 								</ul>
-							</span>
-						</td>						
-						<td>
-							<a th:text="${procedure.status}"
-								th:class="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success text-white' : (${procedure.status.toString().equals('REJECTED')} ? 'btn btn-danger text-white' : 'btn btn-warning')">
-							</a>
-
-						</td>
-						<td th:text="${procedure.name}"></td>
-						<td th:text="${procedure.lookUpName}"></td>
-						<td th:text="${procedure.lookUpCode}"></td>
-						<!-- <td th:text="${procedure.editDistance}"></td> -->
-						<td>
-							<span th:text="${(100 - procedure.editDistance) * 100 / 100 + '%'}"></span>
-
-						</td>
-						<td th:text="${procedure.quantity}"></td>
-						<td th:text="${procedure.rate}"></td>
-						<td>
-							<div class="row justify-content-around">
-								<span class="accept-icon action-icon-accept col-6">
-									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
-										class="action-icon-accept">
-										<i class="fas fa-check-circle "></i>
-									</a></span>
-								<span class="reject-icon action-icon-reject col-6">
-									<a th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
-										class="action-icon-reject">
-										<i class="fas fa-times-circle"></i>
-									</a>
-								</span>
+							  </div>
+							  <div class="dropdown" style="margin-left: 1rem;">
+								<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" style="background-color: #008080; border: none;">Sort By
+								<span class="caret"></span></button>
+								<ul class="dropdown-menu">
+								  <li><a href="#">hospital Name</a></li>
+								  <li><a href="#">Narration</a></li>
+								  <li><a href="#">created Date</a></li>
+								</ul>
+							  </div>
+						</div>
+					</div>
+				</div>
+				<div class="main__filter" style="padding-top: 0.8rem;">
+					<form th:action="@{/page/{currentPage}(currentPage=${currentPage})}" th:object="${filterRequest}" method="get">
+						<div class="input-group">
+							<input class="form-control" type="text" name="query" placeholder="Search..."
+							data-toggle="modal" data-target="#filterModal" aria-label="Search" style="border:none; font-size: 2rem;height: 4.5rem;">
+							<div class="input-group-btn">
+								<button class="btn btn-default" type="submit" style="height: 4.5rem; background-color: #008080;">
+									<i class="glyphicon glyphicon-search" style="font-size: 2rem;color: white;"></i>
+								</button>
 							</div>
-
-
-							<!-- <a th:text="${procedure.status.toString().equals('ACCEPTED') ? procedure.status : ''}"
-								class="baseclass"
-								th:classappend="${procedure.status.toString().equals('ACCEPTED')} ? 'btn btn-success disabled' : 'hidden'">
-								Accepted
-							</a>
-							<div class="row">
-								<div class="col-6">
-									<a th:text="${procedure.status.toString().equals('UNACCEPTED')  || procedure.status.toString().equals('REJECTED')? 'ACCEPT' : ''}"
-										th:href="@{/updateStatus/{id}(id=${procedure.id},status='accept')}"
-										class="baseclass"
-										th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-warning'">
-										Accept
-									</a>
+						</div>
+						<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
+							aria-hidden="true">
+							<div class="modal-dialog" role="document">
+								<div class="modal-content">
+									<div class="modal-header">
+										<h5 class="modal-title" id="filterModalLabel">Filter Options</h5>
+										<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+											<span aria-hidden="true">&times;</span>
+										</button>
+									</div>
+									<!-- <div class="modal-body">
+										<div class="form-group">
+											<label for="procedureName">Hospital Name:</label>
+											<input type="text" class="form-control" id="hospitalName" name="hospitalName" th:field="*{hospitalName}">
+										</div>
+										<div class="form-group">
+											<label for="cbaName">Narration:</label>
+											<input type="text" class="form-control" id="narration" name="narration" th:field="*{narration}">
+										</div>
+										
+										<input type="hidden" name="sortField" th:value="${filterRequest.sortField}" />
+										<input type="hidden" name="sortDir" th:value="${filterRequest.sortDir}" />
+										<input type="hidden" name="pageSize" th:value="${filterRequest.pageSize}" /> 
+										<input type="hidden" name="statuses" th:value="${filterRequest.statuses}" /> 
+									</div> -->
+									
+									<div class="modal-footer">
+										<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+										<button type="button" class="btn btn-primary" style="background-color: #008080;">Filter</button>
+									</div>
 								</div>
-
-								<div class="col-6">
-									<a th:text="${procedure.status.toString().equals('UNACCEPTED') || procedure.status.toString().equals('REJECTED') ? 'REJECT' : ''}"
-										th:href="@{/updateStatus/{id}(id=${procedure.id},status='reject')}"
-										class="baseclass"
-										th:class="${procedure.status.toString().equals('ACCEPTED')} ? '' : 'btn btn-danger'">
-										Reject
-									</a>
-								</div> -->
-							<!-- </div> -->
-
+							</div>
+							
+						</div>
+					</form>
+				</div>
+				<div class="table-responsive table-main main__bottom">  
+					<table class="table">
+					  <thead>
+						<tr>
+							<th></th>
+						  <th>#</th>
+						  <th>Created Date</th>
+						  <th>Hospital Name</th>
+						  <th>Narration</th>
+						  <th>Count</th>
+						</tr>
+					  </thead>
+					  <tbody>
+						<tr  th:each="claim, i : ${claims}">
+						<td>
+							<div class="dropdown">
+								<a class="btn btn-primary dropdown-toggle btn-caret dropdown__button"  data-toggle="dropdown">
+								<span class="caret"></span></a>
+								<ul class="dropdown-menu">
+								  <!-- <li><a th:href="@{/view/procedures/page/1}">View Records</a></li> -->
+								  <li>
+									<a th:with="claimId=${claim.id}" th:href="@{/procedures/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId})}">View procedures</a>
+								</li>								
+								  <li><a href="#">Edit</a></li>
+								</ul>
+							  </div>
 						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-		<div th:if="${totalPages > 1}" class="container-fluid pagination">
-			<div class="row col-sm-12">
-				<div class="col-sm-2">
-					Total Rows: [[${totalItems}]]
+						<td th:text="${i.index+1}"></td>
+						<td th:text="${claim.createdDate}"></td>
+						<td th:text="${claim.hospitalName}"></td>
+						<td th:text="${claim.narration}"></td>
+						<td th:text="${claim.procedures.size()}"></td>
+						<!-- <td th:text="${claim.distinctProcedures.size()}"></td> -->
+						</tr>
+					
+					  </tbody>
+					</table>
+					<div class="pagination__main">
+						<ul class="pagination__list">
+							<li class="pagination__text">Row per page:</li>
+							<li>
+								<div class="dropdown">
+									<a class="btn btn-primary dropdown-toggle btn-caret pagination__button-main" data-toggle="dropdown"
+										>
+										<span th:text="${pageSize}" class="pagination__text"></span>
+										<span class="caret "></span>
+									</a>
+									<ul class="dropdown-menu pagination__menu">
+										<li><a
+												th:href="@{/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=10, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">10</a>
+										</li>
+										<li><a
+												th:href="@{/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=50, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">50</a>
+										</li>
+										<li><a
+												th:href="@{/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=100, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">100</a>
+										</li>
+										<li><a
+												th:href="@{/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=200, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">200</a>
+										</li>
+										<li><a
+												th:href="@{/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=500, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">500</a>
+										</li>
+										<li><a
+												th:href="@{/page/{currentPage}(currentPage=${currentPage}, claimId=${claimId}, pageSize=1000, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}">1000</a>
+										</li>
+									</ul>
+								</div>
+							</li>
+							<li
+								th:text="${((currentPage - 1) * pageSize + 1) + ' - ' + ((currentPage * pageSize) < totalItems ? (currentPage * pageSize) : totalItems) + ' of ' + totalItems}" class="pagination__text">
+							</li>
+							<li>
+								<a th:href="@{/page/{previousPage}(previousPage=${previousPage}, claimId=${claimId}, pageSize=${pageSize}, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}"
+									th:if="${currentPage > 1}" title="Previous Page">
+									<span class="glyphicon glyphicon-chevron-left pagination__icon" ></span>
+								</a>
+							</li>
+							<li>
+								<a th:href="@{/page/{nextPage}(nextPage=${nextPage}, claimId=${claimId}, pageSize=${pageSize}, sortField=${sortField}, sortDir=${sortDir}, query=${query}, statuses=${statuses})}"
+									th:if="${currentPage < totalPages}" title="Next Page">
+									<span class="glyphicon glyphicon-chevron-right pagination__icon"></span>
+								</a>
+							</li>
+						</ul>
+					</div>
+					
+					</div>
+				  </div>
+			</div>
+			<div class="col-sm-2 sidenav">
+				<!-- <div class="well">
+					<p>ADS</p>
 				</div>
-				<div class="col-sm-8">
-					<span th:each="i: ${#numbers.sequence(1, totalPages)}">
-						<a th:if="${currentPage != i}"
-							th:href="@{'/page/' + ${i}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">[[${i}]]</a>
-						<span th:unless="${currentPage != i}">[[${i}]]</span> &nbsp; &nbsp;
-					</span>
-				</div>
-				<div class="col-sm-1">
-					<a th:if="${currentPage < totalPages}"
-						th:href="@{'/page/' + ${currentPage + 1}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query}+ '&statuses=' + ${statuses}}">Next</a>
-					<span th:unless="${currentPage < totalPages}">Next</span>
-				</div>
-
-				<div class="col-sm-1">
-					<a th:if="${currentPage < totalPages}"
-						th:href="@{'/page/' + ${totalPages}+ '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + '&query=' + ${query} + '&statuses=' + ${statuses}}">Last</a>
-					<span th:unless="${currentPage < totalPages}">Last</span>
-				</div>
+				<div class="well">
+					<p>ADS</p>
+				</div> -->
 			</div>
 		</div>
-	</main>
+	</div>
 
-	<!-- <footer>
+
+	<!-- <footer class="container-fluid text-center">
+		<p>&copy; 2023 My Website</p>
 	</footer> -->
-
-	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-	<script src="/js/checkbox_bulk_selection.js"></script>
-	<script src="/js/three_dot_icon.js"></script>
+	<script th:src="@{/js/getUserDetails.js}"></script>
+	<script>
+		let numRows = 10; // Initial number of rows
+	
+		function changeRows(change) {
+			numRows += change;
+			// Implement logic to update the table rows based on numRows
+			// For example, you can use AJAX to fetch new data based on numRows
+			console.log('Number of rows:', numRows);
+		}
+		</script>
 </body>
 
 </html>
+
+http://localhost:8080/procedures/page/1?claimId=1&pageSize=50&sortField=createdDate&sortDir=asc&statuses=ACCEPTED,UNACCEPTED

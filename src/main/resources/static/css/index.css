@@ -1,234 +1,177 @@
-/* Define a class for the accept icon */
-/* Apply styles to the body element to set default font and margin */
-body {
-    font-family: Arial, sans-serif;
+*, *::before, *::after{
     margin: 0;
-}
-
-/* Style the header to span the full width */
-nav {
-    background-color: #333;
-    /* color: white; */
-    padding: 10px;
-    width: 100%;
-}
-
-/* Style the main content to be centered with 80% width */
-main {
-    margin: 0 auto; /* Center the content */
-    /* width: 80%; */
-    /* padding: 20px; */
-    /* background-color: gray; */
-    margin-top: 2dvh;
-    margin-bottom: 2dvh;
-
-}
-.subHeader {
-    display: flex; 
-    flex-direction: row; 
-    justify-content: space-between;
-    margin-bottom: 2dvh;
-}
-.dynamicIcons{
-    display: flex; 
-    flex-direction: row; 
-    justify-content:space-around;
-    align-content: space-around;
-    
-}
-.actionButtons{
-    display: flex; 
-    flex-direction: row; 
-    justify-content:space-around;
-    align-content: space-around;
-}
-.acceptIcon{
-    padding-right: 1em;
-}
-.rejectIcon{
-    padding-right: 1em;
-}
-.downloadIconStyle{
-    color: blue;
-    font-size: xx-large;
-    border-radius: 30px;
-}
-.downloadIconStyle:hover {
-    color: blue;
-    font-size: xx-large;
-    background-color: white;
-}
-.acceptIconStyle{
-    color: green;   /* Set the icon color */
-    font-size: xx-large;
-    border-radius: 30px;
-    
-}
-.acceptIconStyle:hover{
-    color: green;   /* Set the icon color */
-    font-size: xx-large;
-    background-color: white;
-}
-.rejectIconStyle{
-    color: red;     /* Set the icon color */
-    font-size: xx-large;
-    border-radius: 30px;
-}
-.rejectIconStyle:hover{
-    color: red;     /* Set the icon color */
-    font-size: xx-large;
-    background-color: white;
-    border-radius: 30px;
-}
-.filterButton{
-    padding-left: 1em;
-    margin-top: 0.6em;
-}
-
-.custom-button {
-    /* Apply your custom button styles here */
-    border: none; /* Remove the default button border */
-    color: white; /* Text color */
-    padding: 10px 30px; /* Adjust padding as needed */
-    border-radius: 5px; /* Rounded corners */
-    cursor: pointer; /* Change cursor on hover */
-    background-color: #007bff; /* Custom background color */
-}
-.custom-btn {
-    background-color: #007bff; /* Custom background color */
-    color: #fff; /* Custom text color */
-    padding: 13px 30px; /* Adjust padding as needed */
-    border: none; /* Remove the default button border */
-    cursor: pointer; /* Change cursor on hover */
-    border-radius: 5px; /* Rounded corners */
-}
-
-.custom-btn:hover {
-    background-color: #0056b3; /* Custom background color on hover */
-}
-
-.custom-dropdown-item {
-    color: #333; /* Custom text color for dropdown items */
-    padding: 5px 10px; /* Custom padding for dropdown items */
-    text-decoration: none; /* Remove default text decoration */
-}
-
-.custom-dropdown-item:hover {
-    background-color:aliceblue; /* Custom background color on hover */
-    border-radius: 5px; /* Add border-radius on hover */
-    /* padding: 10px 15px;  */
-    color:#333;
-    text-decoration: none; /* Keep the text unaltered on hover */
-}
-
-
-/* Style the footer to span the full width */
-footer {
-    /* background-color: #333;
-    color: white;
-    padding: 10px;
-    width: 100%; */
-}
-.sub-header{
-    /* background-color: blue; */
-    margin-bottom: 2em;
-}
-.content{
-    /* background-color: crimson; */
-}
-.pagination{
-    margin-top: 2em;
-    /* margin-bottom: 2em; */
-}
-.accept-icon .fas {
-    
-}
-
-/* Define a class for the reject icon */
-.reject-icon .fas {
-   
-}
-.action-icon-accept{
-    color: green;   /* Set the icon color */
-    font-size: xx-large;
-    border-radius: 30px;
-    align-content: center;
-}
-.action-icon-reject{
-    color: red;     /* Set the icon color */
-    font-size: xx-large;
-    border-radius: 30px;
-    align-content: center;
-}
-.action-icon-accept:hover{
-    color: green;   /* Set the icon color */
-    font-size: xx-large;
-    background-color: white;
-}
-.action-icon-reject:hover{
-    color: red;     /* Set the icon color */
-    font-size: xx-large;
-    background-color: white;
-    border-radius: 30px;
-}
-.icons .fas{
-    font-size: xx-large;
-}
-tr:hover{
-    background-color:aliceblue;
-}
-/* Hide the icons by default */
-.accept-icon .fas,
-.reject-icon .fas {
-    display: none;
-}
-
-/* Show the icons when hovering over the table row */
-tr.accept-icon:hover .accept-icon .fas,
-tr.reject-icon:hover .reject-icon .fas {
-    display: inline-block;
-}
-
-/* Exclude custom-link from the icon styling */
-.custom-link .fas {
-    display: inline-block !important; 
-}
-
-.menu-container {
-    position:absolute;
-    /* display: inline-block; */
-}
-
-.menu {
-    display: none;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 25;
+    padding: 0;
+    border: 0;
+    outline: 0;
     list-style: none;
-    padding: 10px 10px;
     text-decoration: none;
-    margin-top: -25px;
-    margin-left: 10px;
-} 
+    box-sizing: border-box;
+  }
+  
+  :root{
+    --primary-hue:210;
+    --gray-hue:0;
+    --color-primary:hsl(var(--primary-hue), 100%, 50%);
+    --color-primary-variant:hsl(var(--primary-hue), 100%, 65%);
+    --color-secondary:#008080;
+    --color-gray-100:hsl(var(--gray-hue), 0%, 20%); /*#333333*/
+    --color-gray-200:hsl(var(--gray-hue), 0%, 100%);
+    --color-gray-300:hsl(var(--gray-hue), 0%, 62%); /*#9d9d9d*/
+    --color-gray-400:hsl(var(--gray-hue), 16%, 41%);
+    --color-gray-500:hsl(var(--gray-hue), 0%, 95%); /*f1f1f1*/
+    --color-gray-600:hsl(var(--gray-hue), 0%, 100%); /*#ffffff*/
+  
+    --container-width-lg:80%;
+    --container-width-md:90%;
+  
+    --transition: all 500ms ease;
+  
+  }
 
-.menu li { 
-    /* padding: 5px 10px; */
-     text-decoration: none;
-} 
-
-.menu li a {
-    text-decoration: none; 
-    color: #333; 
+body {
+        font-family: 'Montserrat', sans-serif;
+        color: var(--color-gray-100);;
+        line-height: 1.7;
+        /* overflow: hidden; */
+        background: var(--color-gray-500);
+        height: 100vh;
 }
-
-.menu li:hover {
-    background-color: #f0f0f0;
-    cursor: pointer;
-} 
-
-footer {
-    background-color: #333;
-    color: white;
-    padding: 10px;
+h1,h2,h3,h4,h5{
+    list-style: 1.2;
+    color: var(--color-gray-100);
+  }
+  
+  h1{
+    font-size: 3rem;
+  }
+  
+  h2{
+    font-size: 2rem;
+  }
+  a{
+    color: var(--color-gray-100);
+  }
+  
+  img{
+    display: block;
+    object-fit: cover;
     width: 100%;
+  } 
+  .main__top{
+    background-color: #ffffff;
+    border-radius: 5px;
+    padding: 1rem;
+  }
+  .main__bottom{
+    background-color: #ffffff;
+    border-radius: 5px;
+    padding: 2rem;
+    margin-top: 1rem;
+  }
+  .navbar {
+    margin-bottom: 0;
+    border-radius: 0;
+    background-color: #ffffff;
+    border: none;
+  }
+  .navbar:hover{
+    color: var(--color-secondary);
+  }
+  .navbar-inverse .navbar-nav>li>a:hover{
+    color: #008080;
+  }
+  .navbar-inverse .navbar-nav>li>a {
+    color: var(--color-gray-100);;
+  }
+.navbar-inverse .navbar-brand {
+    color: var(--color-gray-100);
 }
+.navbar-inverse .navbar-header>a:hover {
+  color: var(--color-secondary);;
+}
+.header__container{
+    width: var( --container-width-lg);
+    margin: 0 auto;
+    color: var(--color-gray-100);
+}
+.container-fluid{
+  height: 100%;
+}
+.content_{
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.pagination__main{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination__list>li{
+  display:inline-block;
+  margin: 0rem 1rem;
+}
+.pagination__list > li a{
+  /* padding: 0rem 2rem; */
+  text-decoration: none;
+}
+.table-main{
+  height: 100%;
+  padding-bottom: 7rem;
+  overflow-x:unset;
+}
+.pagination__icon{
+  font-size: medium;
+  font-weight: 700;
+}
+
+.pagination__menu{
+  background-color: transparent;
+}
+.pagination__button-main{
+  background-color: #ddd;
+  border: none;
+  color: var(--color-gray-100);
+}
+.pagination__text{
+  font-size: medium; font-weight: 500;
+}
+
+.pagination__text-icon{
+  font-weight:100;
+  font-size: 2rem;
+}
+.pagination__main .dropdown>a:hover {
+  background-color: var(--color-secondary);
+}
+.pagination__main .dropdown>a:active {
+  background-color: var(--color-secondary);
+}
+.table-main .dropdown__button{
+  background-color: #ddd;
+  border: none;
+  color: var(--color-gray-100);
+}
+.table-main .dropdown__button:hover{
+  background-color: var(--color-secondary);
+  color: #ffffff;
+}
+.table-main .dropdown__button::selection{
+  background-color: var(--color-secondary);
+  color: #ffffff;
+}
+.bulk__action-button{
+  background-color: #ddd;
+  border: none;
+  color: var(--color-gray-100);
+}
+.bulk__action-button:hover{
+  background-color: var(--color-secondary);
+  color: #ffffff;
+}
+.bulk__action-button:active{
+  background-color: var(--color-secondary);
+  color: #ffffff;
+}
+

@@ -1,41 +1,93 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
-<meta charset="ISO-8859-1">
-<title>Fuzzy String Matching</title>
-<link rel="stylesheet"
-	href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-	integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
-	crossorigin="anonymous">
+	<meta charset="ISO-8859-1">
+	<title>Queencoder</title>
 	<link rel="stylesheet" th:href="@{/css/loading.css}">
-<script src="https://kit.fontawesome.com/1385283e69.js"
-	crossorigin="anonymous"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" th:href="@{/css/index.css}">
+	<link rel="stylesheet" th:href="@{/css/upload.css}">
+	<!--GOOGLE FONTS (Montserrat)-->
+	<link
+		href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap"
+		rel="stylesheet">
+	<script src="https://kit.fontawesome.com/1385283e69.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
-	<div class="container">
-		<div>
-			<h1>Fuzzy string Matching</h1>
-		</div>
-		
-		
-		<form th:action="@{/upload-csv-file}" method="POST"
-			enctype="multipart/form-data">
-    		<input type="radio" name="operationType" value="create" checked> Upload New Schedule
-			<input type="radio" name="operationType" value="update" > Update Lookup Table
-
-			<hr>
-			<div>
-				<label for="img">Select a CSV file:</label> <input type="file"
-					name="file" class="form-control-file" id="file" accept=".csv">
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid  header__container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">Logo</a>
 			</div>
-			<hr>
+			<form class="navbar-form navbar-left form__container" action="/action_page.php">
+				<div class="input-group input__container">
+					<input type="text" class="form-control" placeholder="Search" name="search">
+					<div class="input-group-btn">
+						<button class="btn btn-default" type="submit">
+							<i class="glyphicon glyphicon-search"></i>
+						</button>
+					</div>
+				</div>
+			</form>
+			<div class="collapse navbar-collapse  navbar-right" id="myNavbar">
+				<ul class="nav navbar-nav">
+					<li><a th:href="@{/}">Home</a></li>
+				</ul>
+				<ul class="nav navbar-nav" th:with="userDetails=${session.userDetails}">
+					<li><a th:href="@{/logout}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+					<li><a href="#"><span class="glyphicon glyphicon-user"></span>
+							<p th:text="${userDetails.name}" style="display: inline; padding-left: 1.0rem;"></p>
+						</a></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	<div class="container-fluid">
+		<div class="row content_">
+			<div class="col-sm-2 sidenav">
 
-			<button id="showLoadingButton" type="submit" class="btn btn-info col-2">Upload Records</button>
-		</form>
-		<!-- <div th:text="${uploadData}"></div> -->
-		<div id="loading-overlay">
-			<div class="spinner">
-				<h1>I am loading</h1>
+			</div>
+			<div class="col-sm-8 text-left">
+				<div class="main__top">
+					<h2>Fuzzy string Matching</h2>
+				</div>
+				<div class="main__bottom">
+					<form th:action="@{/upload-csv-file}" method="POST" enctype="multipart/form-data">
+						<div>
+							<input type="radio" name="operationType" value="create" checked> Upload New Schedule
+	
+						</div>
+						<div >
+							<input type="radio" name="operationType" value="update"> Update Lookup Table
+						</div>
+						<hr>
+						<div>
+							<label for="img"><span>Select a CSV file:</span></label> <input type="file" name="file"
+								class="form-control-file" id="file" accept=".csv">
+						</div>
+						<hr>
+						<button id="showLoadingButton" type="submit" class="btn btn-info col-2">Upload Records</button>
+					</form>
+					<!-- <div th:text="${uploadData}"></div> -->
+					<div id="loading-overlay">
+						<div class="spinner">
+							<h2>I am loading</h2>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-2 sidenav">
+
 			</div>
 		</div>
 	</div>
@@ -44,4 +96,5 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 	<script src="/js/loading.js"></script>
 </body>
+
 </html>
