@@ -320,20 +320,26 @@ public class ProcedureServiceImpl implements ProcedureService {
 				String code = s.getString("Procedure Code");
 				String description = s.getString("Procedure Description");
 
-				// Check if an entry with the same code already exists
-				ProcedureLookUp existingProcedure = procedureLookUpRepository.findByCode(code);
-				if (existingProcedure != null) {
-					existingProcedure.setDescription(description);
-					procedureList.add(existingProcedure);
-				} else {
-					// Create a new entry
-					ProcedureLookUp newProcedure = ProcedureLookUp.builder()
+				ProcedureLookUp newProcedure = ProcedureLookUp.builder()
 							.code(code)
 							.description(description)
 							.build();
 					procedureList.add(newProcedure);
 
-				}
+				// Check if an entry with the same code already exists
+				// ProcedureLookUp existingProcedure = procedureLookUpRepository.findByCode(code);
+				// if (existingProcedure != null) {
+				// 	existingProcedure.setDescription(description);
+				// 	procedureList.add(existingProcedure);
+				// } else {
+				// 	// Create a new entry
+				// 	ProcedureLookUp newProcedure = ProcedureLookUp.builder()
+				// 			.code(code)
+				// 			.description(description)
+				// 			.build();
+				// 	procedureList.add(newProcedure);
+
+				// }
 			}
 			procedureLookUpRepository.saveAll(procedureList);
 			return procedureList;
