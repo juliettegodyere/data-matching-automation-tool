@@ -6,6 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -13,6 +15,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,6 +54,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 @Slf4j
 public class ProcedureServiceImpl implements ProcedureService {
+
+	@Value("${download.folder.path}")
+    private String downloadFolderPath;
 
 	@Autowired
 	private ProcedureRepository procedureRepository;
@@ -486,16 +492,17 @@ public class ProcedureServiceImpl implements ProcedureService {
 
 		String csvContent = generateCSVContent(procedures);
 
-		String downloadFolderPath = System.getenv("DOWNLOAD_FOLDER_PATH");
+		// String downloadFolderPath = System.getenv("DOWNLOAD_FOLDER_PATH");
+		Path downloadFolderPath = getDefaultDownloadPath();
 		// String downloadFolderPath = environment.getProperty("download.folder.path");
 		String fileName = claim.getHospitalName() + "_" + claim.getNarration() + "_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".csv";
-		log.info("Filename {}", fileName);
+	
 
 		// String fileName = "Records_" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + ".csv";
 
 		try {
 			// Create the download folder if it doesn't exist
-			File downloadFolder = new File(downloadFolderPath);
+			File downloadFolder = new File(downloadFolderPath.toString());
 			if (!downloadFolder.exists()) {
 				downloadFolder.mkdirs();
 			}
@@ -523,6 +530,28 @@ public class ProcedureServiceImpl implements ProcedureService {
 		}
 
 	}
+
+	 public Path getDefaultDownloadPath() {
+        // Resolve the relative path to an absolute path
+        String userHome = System.getProperty("user.home");
+        String osName = System.getProperty("os.name").toLowerCase();
+		log.info("Home directory {}", userHome);
+		log.info("The OS {}", osName);
+
+        if (osName.contains("win")) {
+            // On Windows, use the default downloads folder
+			log.info("I am Windows {}",userHome+"/Downloads/");
+            return Paths.get(userHome, "Downloads");
+        } else if (osName.contains("nix") || osName.contains("nux") || osName.contains("mac")) {
+            // On Unix-based systems (Linux, macOS), use the default downloads folder
+			log.info("I am Mac {}", userHome+"/Downloads/");
+            return Paths.get(userHome, "Downloads");
+        } else {
+            // Fallback to the user's home directory
+			log.info("I am nobody {}", userHome+"/Downloads/");
+            return Paths.get(userHome, downloadFolderPath);
+        }
+    }
 
 	@Override
 	public void markProcedureAsRejected(List<Procedure> procedures) {
